@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
     where: { OR: [{ toId: id }, { fromId: id }] },
   });
 
+  await prisma.presence.deleteMany({ where: { id } });
+
   // Notify the partner *after* the deletes above, otherwise the
   // fromId cleanup would wipe this "end" signal before it's delivered.
   if (typeof peerId === "string" && peerId) {
