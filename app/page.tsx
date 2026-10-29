@@ -30,9 +30,10 @@ export default function Home() {
   const [notice, setNotice] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
+  const [myLocation, setMyLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   const [conn, _setConn] = useState<Conn>({ kind: "idle" });
   const connRef = useRef<Conn>(conn);
@@ -88,6 +89,12 @@ export default function Home() {
       },
       onChannelOpen: () => {
         setConn({ kind: "connected", peerId });
+      },
+      onChannelClose: () => {
+        // Guard: our own teardown closes the channel too.
+        if (peerRef.current === ps) {
+          teardown("Stranger disconnected.");
+        }
       },
     });
     peerRef.current = ps;
@@ -251,13 +258,9 @@ export default function Home() {
       }
       case "end": {
         const c = connRef.current;
-        if (
-          (c.kind === "incoming" ||
-            c.kind === "connecting" ||
-            c.kind === "connected") &&
-          c.peerId === sig.fromId
-        ) {
+        if (c.kind !== "idle" && c.peerId === sig.fromId) {
           if (c.kind === "incoming") setConn({ kind: "idle" });
+          else if (c.kind === "requesting") teardown("Stranger left.");
           else teardown("Stranger disconnected.");
         }
         break;
@@ -294,7 +297,10 @@ export default function Home() {
 
   useEffect(() => {
     if (!sessionId || phase !== "live") return;
-    const onLeave = () => leave(sessionId);
+    const onLeave = () => {
+      const c = connRef.current;
+      leave(sessionId, c.kind !== "idle" ? c.peerId : undefined);
+    };
     window.addEventListener("pagehide", onLeave);
     window.addEventListener("beforeunload", onLeave);
     return () => {

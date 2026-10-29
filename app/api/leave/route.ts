@@ -9,9 +9,12 @@ export const dynamic = "force-dynamic";
 // the body may arrive as text — parse defensively.
 export async function POST(request: NextRequest) {
   let id: string | undefined;
+  let peerId: string | undefined;
   try {
     const text = await request.text();
-    id = text ? (JSON.parse(text)?.id as string | undefined) : undefined;
+    const parsed = text ? JSON.parse(text) : undefined;
+    id = parsed?.id;
+    peerId = parsed?.peerId;
   } catch {
     id = undefined;
   }
@@ -25,7 +28,18 @@ export async function POST(request: NextRequest) {
   await prisma.signal.deleteMany({
     where: { OR: [{ toId: id }, { fromId: id }] },
   });
-  await prisma.presence.deleteMany({ where: { id } });
+
+  // Notify the partner *after* the deletes above, otherwise the
+  // fromId cleanup would wipe this "end" signal before it's delivered.
+  if (typeof peerId === "string" && peerId) {
+    await prisma.presence.updateMany({
+      where: { id: peerId },
+      data: { busy: false },
+    });
+    await prisma.signal.create({
+      data: { fromId: id, toId: peerId, type: "end", payload: null },
+    });
+  }
 
   return Response.json({ ok: true });
 }
