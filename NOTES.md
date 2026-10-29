@@ -26,6 +26,10 @@ different mock geolocations).
   handled and `/api/leave` didn't notify the partner. Wired up
   `onChannelClose`, and leave now sends `end` and frees the partner's busy flag.
 
+    - *Regression caught while testing Phase 1:* the partner-notify change
+    accidentally dropped the presence `deleteMany` from `/api/leave`, so
+    closed tabs lingered on the map until stale reaping. Restored it.
+
   - **Dots drifted while panning.** Mapbox positions each marker by writing an
   inline `transform` on the marker element every frame, but our CSS put
   `transition: transform` on that same element, so dots eased after the map

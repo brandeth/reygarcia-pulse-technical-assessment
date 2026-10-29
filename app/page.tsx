@@ -34,6 +34,8 @@ export default function Home() {
     lat: number;
     lng: number;
   } | null>(null);
+  // Raw location kept client-side only, so we can rejoin if our row is reaped.
+  const myLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   const [conn, _setConn] = useState<Conn>({ kind: "idle" });
   const connRef = useRef<Conn>(conn);
@@ -282,6 +284,13 @@ export default function Home() {
       try {
         const data = await poll(sessionId);
         if (!active) return;
+        // Our presence row is gone (reaped while throttled, or deleted by a
+        // pagehide leave before a bfcache restore) — recreate it. A failure
+        // throws into the catch below and is retried on the next tick.
+        if (!data.self && myLocationRef.current) {
+          const { lat, lng } = myLocationRef.current;
+          await join(sessionId, lat, lng);
+        }
         setPeers(data.peers);
         for (const s of data.signals) processSignalRef.current(s);
       } catch {}
@@ -301,17 +310,18 @@ export default function Home() {
       const c = connRef.current;
       leave(sessionId, c.kind !== "idle" ? c.peerId : undefined);
     };
+    // pagehide alone covers tab close, navigation and bfcache entry;
+    // beforeunload was redundant and can make the page bfcache-ineligible.
     window.addEventListener("pagehide", onLeave);
-    window.addEventListener("beforeunload", onLeave);
     return () => {
       window.removeEventListener("pagehide", onLeave);
-      window.removeEventListener("beforeunload", onLeave);
     };
   }, [sessionId, phase]);
 
   async function handleReady(lat: number, lng: number) {
     setMyLocation({ lat, lng });
-    await join(sessionId, lat, lng);
+    myLocationRef.current = { lat, lng };
+    await join(sessionId, lat, lng); // throws on failure → EntryGate shows error
     setPhase("live");
   }
 
