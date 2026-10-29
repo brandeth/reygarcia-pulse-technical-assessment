@@ -125,8 +125,13 @@ export default function WorldMap({
         if (!marker) {
           const el = document.createElement("button");
           el.className = "pulse-dot";
-          el.style.background = dotColor(peer.id);
           el.title = "Tap to connect";
+          // Mapbox positions `el` via an inline transform, so all visual
+          // styling (color, hover scale) lives on this inner element.
+          const core = document.createElement("span");
+          core.className = "pulse-dot-core";
+          core.style.background = dotColor(peer.id);
+          el.appendChild(core);
           el.addEventListener("click", (e) => {
             e.stopPropagation();
             if (canConnectRef.current) onPeerClickRef.current(peer.id);
