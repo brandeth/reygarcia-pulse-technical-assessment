@@ -25,20 +25,32 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Live user dots on the map */
+/* Live user dots on the map.
+   The outer .pulse-dot is the Mapbox marker element: Mapbox positions it with
+   an inline `transform`, so it must carry no transform/transition of its own
+   (a transition there makes dots trail behind the map while panning). */
 .pulse-dot {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pulse-dot-core {
+  display: block;
   width: 14px;
   height: 14px;
+  margin: 2px;
   border-radius: 9999px;
   border: 2px solid rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  padding: 0;
   box-shadow: 0 0 0 rgba(255, 255, 255, 0.5);
   animation: pulse-ring 2s ease-out infinite;
   transition: transform 0.1s ease;
 }
 
-.pulse-dot:hover {
+.pulse-dot:hover .pulse-dot-core {
   transform: scale(1.3);
 }
 

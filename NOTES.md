@@ -21,7 +21,24 @@ different mock geolocations).
   *before* `setRemoteDescription`, so they failed silently or were dropped.
   This often hit because polling delivers the offer and its candidates in the
   same batch. Now flushed after the remote description is set.
-  
+
   - **Partner left but chat stayed "Connected".** Data-channel close wasn't
   handled and `/api/leave` didn't notify the partner. Wired up
   `onChannelClose`, and leave now sends `end` and frees the partner's busy flag.
+
+  - **Dots drifted while panning.** Mapbox positions each marker by writing an
+  inline `transform` on the marker element every frame, but our CSS put
+  `transition: transform` on that same element, so dots eased after the map
+  instead of sticking to it (and the hover `scale` was overridden by the
+  inline style). Moved the dot's visuals and hover scale to an inner
+  `.pulse-dot-core` element and left the marker element unstyled.
+
+  - **Missing Mapbox token failed silently.** `WorldMap` fell back to a
+  hardcoded fake token when `NEXT_PUBLIC_MAPBOX_TOKEN` was unset. Because
+  it was a non-empty string, the existing `!TOKEN` guards never fired: the
+  map loaded with an invalid token (401s from Mapbox, blank gray map) and
+  the setup hint never showed. Changed the fallback to `""` so a missing
+  token shows the hint instead. (An *invalid* but present token, e.g. the
+  `.env.example` placeholder, still fails at Mapbox — validating it would
+  need a network call, out of scope.)
+  
