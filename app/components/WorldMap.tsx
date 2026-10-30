@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { PeerDot } from "@/lib/types";
+import { applyNightSignal } from "@/lib/map-theme";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
@@ -59,6 +60,8 @@ export default function WorldMap({
         zoom: me ? 4 : 1.4,
         attributionControl: true,
       });
+      // Recolor dark-v11 to the app palette before its first frame.
+      map.on("style.load", () => applyNightSignal(map));
       map.on("load", () => {
         if (!cancelled) setReady(true);
       });
@@ -163,7 +166,7 @@ export default function WorldMap({
 
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="h-full w-full bg-zinc-900" />
+      <div ref={containerRef} className="h-full w-full bg-ink" />
 
       {!TOKEN && (
         <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
