@@ -5,19 +5,19 @@ import { verify } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// POST /api/leave — body { id, token, peerId? }. Removes the presence row and any pending
-// signals to/from this user. Called via navigator.sendBeacon on tab close, so
-// the body may arrive as text — parse defensively.
+// POST /api/leave — body { id, token }. Removes the presence row and any
+// pending signals to/from this user, and ends any connection or pending
+// request they were part of. Who to notify comes from server state, never
+// the client. Called via navigator.sendBeacon on tab close, so the body may
+// arrive as text — parse defensively.
 export async function POST(request: NextRequest) {
   let id: string | undefined;
   let token: unknown;
-  let peerId: string | undefined;
   try {
     const text = await request.text();
     const parsed = text ? JSON.parse(text) : undefined;
     id = parsed?.id;
     token = parsed?.token;
-    peerId = parsed?.peerId;
   } catch {
     id = undefined;
   }
@@ -30,6 +30,15 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "invalid session" }, { status: 401 });
   }
 
+  // Read our links before deleting the row: who we requested or are paired
+  // with, plus anyone whose request or pairing points at us.
+  const [me, linked] = await Promise.all([
+    prisma.presence.findUnique({ where: { id }, select: { peerId: true } }),
+    prisma.presence.findMany({ where: { peerId: id }, select: { id: true } }),
+  ]);
+  const notify = new Set(linked.map((p) => p.id));
+  if (me?.peerId) notify.add(me.peerId);
+
   // Independent cleanup deletes — no atomicity needed (and interactive
   // transactions are unreliable over a PgBouncer pooler).
   await prisma.signal.deleteMany({
@@ -38,15 +47,20 @@ export async function POST(request: NextRequest) {
 
   await prisma.presence.deleteMany({ where: { id } });
 
-  // Notify the partner *after* the deletes above, otherwise the
-  // fromId cleanup would wipe this "end" signal before it's delivered.
-  if (typeof peerId === "string" && peerId) {
-    await prisma.presence.updateMany({
-      where: { id: peerId },
-      data: { busy: false },
-    });
-    await prisma.signal.create({
-      data: { fromId: id, toId: peerId, type: "end", payload: null },
+  // Free and notify everyone linked to us *after* the deletes above,
+  // otherwise the fromId cleanup would wipe these "end" signals.
+  await prisma.presence.updateMany({
+    where: { peerId: id },
+    data: { busy: false, peerId: null },
+  });
+  if (notify.size > 0) {
+    await prisma.signal.createMany({
+      data: [...notify].map((toId) => ({
+        fromId: id,
+        toId,
+        type: "end",
+        payload: null,
+      })),
     });
   }
 
