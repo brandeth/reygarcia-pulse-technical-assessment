@@ -24,10 +24,10 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-14 | Chat "ended" state | 2a | M | 13 | [x] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [x] |
 | — | *Phase 4 feature: connection arcs, see `phase-4-tasks.md`* | P4 | — | 2a done | — |
-| P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [ ] |
+| P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [x] |
 | P2-17 | Accessibility pass | 2b | M | 2a done | [ ] |
 | P2-18 | Empty states + copy pass | 2b | S | 2a done | [ ] |
-| P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [ ] |
+| P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [x] |
 | P2-20 | Real-device QA | 2b | M | 16–18 | [ ] |
 | P2-21 | NOTES.md Phase 2 section | 2b | S | all | [ ] |
 | P2-22 | *Optional:* light/dark theme toggle | 2b | L | everything else | [ ] |
@@ -163,6 +163,9 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-16 · Motion pass + reduced motion
 - Panel/sheet transitions, button press states, camera easing; `prefers-reduced-motion` disables the looping pulse and big camera moves.
+- **Audit:** already fine: every enter animation has `motion-reduce:animate-none`; `Button` press scale off under RM; globe spin skipped; `flyTo`s aren't `essential`, so Mapbox jumps; dot / ripple / heartbeat animations stop via CSS media queries. Gaps: no exit animations (chat panel, connect + video cards, status pills vanished in one frame), messages popped in, countdown ring frozen under RM.
+- **Done:** `app/components/usePresence.ts` (`EXIT_MS` 200; `prevShow` / `leaving` state adjusted during render, timeout effect) → `{ mounted, leaving }`. New tokens `card-out` (0.2 s ease-in, sink + fade), `fade-out` (RM exit), `msg-in` (0.2 s, 6 px rise). `leaving` prop on `ChatPanel`, `ConnectionPrompt`, `StatusPill` (each `inert` while leaving; `animate-*-out motion-reduce:animate-fade-out`). `ChatPanel` keeps a `shown` snapshot of messages / connected / endedReason, frozen while leaving. `page.tsx` remembers `lastIncomingId` / `lastRequestingId` so leaving cards keep their key (and ring). Toasts exit with a fade under RM too. `CountdownRing` no longer stops under RM. `VideoPanel` has no exit (streams end with the call).
+- **Verified:** MutationObserver timestamps for decline (card-out → removed +211 ms), accept (card-out and chat card-in in the same frame), Back to map (chat leaving shows "Chat ended" content, `inert`, removed +220 ms), cancel request (pill toast-out, then gone); built CSS has the `motion-reduce:` rules inside `prefers-reduced-motion: reduce`. Not run with RM actually on (the browser pane can't emulate it); video card / pill exits not exercised live (need WebRTC), same code path.
 
 ### P2-17 · Accessibility pass
 - Focus rings, keyboard access for prompts / chat / video controls, contrast check on the tokens, labels on icon buttons.
@@ -172,6 +175,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-19 · Branding
 - **Files:** `app/favicon.ico`, `app/layout.tsx` metadata, OG image.
+- **Done:** `lib/brand.ts` (tokens + `MARK_SVG`, `GLOBE_SVG`, `dataUri`); `app/icon.tsx` (64 × 64 PNG), `app/apple-icon.tsx` (180 × 180, mark on a full ink square since iOS shows transparent corners black), `app/opengraph-image.tsx` (1200 × 630 + `alt`), all `next/og` `ImageResponse` with the SVGs as data URIs. Title / description were already set in `layout.tsx`. Deleted `app/favicon.ico` and `public/{file,globe,next,vercel,window}.svg` (unreferenced). `next build`: all three `○` static. No `metadataBase`: Next falls back to `VERCEL_PROJECT_PRODUCTION_URL` on Vercel (local build warns and uses localhost). Default `next/og` font (no Space Grotesk file to load at build).
 
 ### P2-20 · Real-device QA
 - iOS Safari (camera, `playsInline`, keyboard), Android Chrome, narrow widths, two-user run on the Vercel URL.

@@ -10,6 +10,7 @@ import SessionExpired from "./components/SessionExpired";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import VideoPanel from "./components/VideoPanel";
+import { usePresence } from "./components/usePresence";
 import { join, leave, poll, sendSignal, SessionExpiredError } from "@/lib/api";
 import { PeerSession, type DescType, type PeerControl } from "@/lib/webrtc";
 import { POLL_INTERVAL_MS } from "@/lib/presence";
@@ -419,6 +420,23 @@ export default function Home() {
     conn.kind === "connected" ||
     conn.kind === "ended";
 
+  // Closing UI plays an exit animation before it unmounts (usePresence).
+  // Keys that come from `conn` are remembered, so a closing card keeps its
+  // key (and its countdown ring) instead of remounting as it leaves.
+  const incomingId = conn.kind === "incoming" ? conn.peerId : null;
+  const requestingId = conn.kind === "requesting" ? conn.peerId : null;
+  const [lastIncomingId, setLastIncomingId] = useState(incomingId);
+  const [lastRequestingId, setLastRequestingId] = useState(requestingId);
+  if (incomingId && incomingId !== lastIncomingId) setLastIncomingId(incomingId);
+  if (requestingId && requestingId !== lastRequestingId) {
+    setLastRequestingId(requestingId);
+  }
+  const requestPill = usePresence(requestingId !== null);
+  const videoPill = usePresence(video === "requesting");
+  const connectCard = usePresence(incomingId !== null);
+  const videoCard = usePresence(video === "incoming");
+  const chat = usePresence(inChat);
+
   // The map is mounted from the first render, so the gate sits on top of a
   // live globe and entering is one camera move, not a fresh map load.
   // Polling and presence still wait for phase === "live" (effects above).
@@ -449,28 +467,32 @@ export default function Home() {
 
       {/* With the chat panel open on wide screens, center over the map
           area that's still visible (panel w-96 + 1rem gap = 25rem). */}
-      <Toaster toasts={toasts} className={inChat ? "md:right-[25rem]" : ""}>
-        {conn.kind === "requesting" && (
+      <Toaster toasts={toasts} className={chat.mounted ? "md:right-[25rem]" : ""}>
+        {requestPill.mounted && (
           // Mounts with the request, so the ring and REQUEST_TIMEOUT_MS start
           // together; keyed so a new request always gets a full ring.
           <StatusPill
-            key={conn.peerId}
+            key={lastRequestingId}
             onCancel={cancelRequest}
             countdownMs={REQUEST_TIMEOUT_MS}
+            leaving={requestPill.leaving}
           >
             Requesting connection…
           </StatusPill>
         )}
-        {video === "requesting" && (
-          <StatusPill onCancel={cancelVideoRequest}>Requesting video…</StatusPill>
+        {videoPill.mounted && (
+          <StatusPill onCancel={cancelVideoRequest} leaving={videoPill.leaving}>
+            Requesting video…
+          </StatusPill>
         )}
       </Toaster>
 
-      {conn.kind === "incoming" && (
+      {connectCard.mounted && (
         // The requester gives up after REQUEST_TIMEOUT_MS; their "end" closes
         // this card, so the ring is a close (poll-delayed) view of that.
         <ConnectionPrompt
-          key={conn.peerId}
+          key={lastIncomingId}
+          leaving={connectCard.leaving}
           kind="connect"
           title="A stranger wants to connect"
           subtitle="Accept to start a private chat."
@@ -482,8 +504,9 @@ export default function Home() {
         />
       )}
 
-      {inChat && (
+      {chat.mounted && (
         <ChatPanel
+          leaving={chat.leaving}
           messages={messages}
           connected={conn.kind === "connected"}
           videoBusy={video !== "none"}
@@ -498,8 +521,9 @@ export default function Home() {
         />
       )}
 
-      {video === "incoming" && (
+      {videoCard.mounted && (
         <ConnectionPrompt
+          leaving={videoCard.leaving}
           kind="video"
           title="Start video call?"
           subtitle="The stranger wants to turn on video."

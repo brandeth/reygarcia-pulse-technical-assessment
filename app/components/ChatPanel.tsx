@@ -13,14 +13,15 @@ export interface ChatMessage {
 // map (and your place on it) in view; from md up it floats as a glass panel
 // on the right, under the header.
 export default function ChatPanel({
-  messages,
-  connected,
+  messages: liveMessages,
+  connected: liveConnected,
   videoBusy,
   onSend,
   onStartVideo,
   onEnd,
-  endedReason,
+  endedReason: liveEndedReason,
   onClose,
+  leaving = false,
 }: {
   messages: ChatMessage[];
   connected: boolean;
@@ -32,9 +33,32 @@ export default function ChatPanel({
   // and the input is replaced by "Back to map" (onClose).
   endedReason?: string;
   onClose: () => void;
+  // Closed: playing its exit (usePresence).
+  leaving?: boolean;
 }) {
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  // The page clears the conversation the moment the chat closes, so while
+  // the panel slides away it keeps showing what it showed last, instead of
+  // an empty "Connecting…" panel. Adjusted during render (React's pattern
+  // for state that follows props); the fields are primitives or stable
+  // state, so this settles in one pass.
+  const live = {
+    messages: liveMessages,
+    connected: liveConnected,
+    endedReason: liveEndedReason,
+  };
+  const [shown, setShown] = useState(live);
+  if (
+    !leaving &&
+    (live.messages !== shown.messages ||
+      live.connected !== shown.connected ||
+      live.endedReason !== shown.endedReason)
+  ) {
+    setShown(live);
+  }
+  const { messages, connected, endedReason } = leaving ? shown : live;
   const ended = endedReason !== undefined;
 
   useEffect(() => {
@@ -52,7 +76,12 @@ export default function ChatPanel({
   return (
     <section
       aria-label="Chat with a stranger"
-      className="absolute inset-x-0 bottom-0 z-20 flex h-[72dvh] animate-card-in flex-col rounded-t-panel border-t border-line bg-surface/90 text-fg shadow-panel backdrop-blur-glass motion-reduce:animate-none md:inset-x-auto md:top-[calc(4.5rem+var(--safe-top))] md:right-[calc(1rem+var(--safe-right))] md:bottom-4 md:h-auto md:w-96 md:rounded-panel md:border"
+      inert={leaving}
+      className={`absolute inset-x-0 bottom-0 z-20 flex h-[72dvh] flex-col rounded-t-panel border-t border-line bg-surface/90 text-fg shadow-panel backdrop-blur-glass md:inset-x-auto md:top-[calc(4.5rem+var(--safe-top))] md:right-[calc(1rem+var(--safe-right))] md:bottom-4 md:h-auto md:w-96 md:rounded-panel md:border ${
+        leaving
+          ? "animate-card-out motion-reduce:animate-fade-out"
+          : "animate-card-in motion-reduce:animate-none"
+      }`}
     >
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
         {/* The stranger, drawn like their dot on the map. */}
@@ -127,7 +156,7 @@ export default function ChatPanel({
               className={`flex ${m.mine ? "justify-end" : "justify-start"} ${first ? "mt-3" : "mt-0.5"}`}
             >
               <p
-                className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] ${shape} ${
+                className={`max-w-[80%] animate-msg-in rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] motion-reduce:animate-none ${shape} ${
                   m.mine
                     ? "bg-accent text-on-accent"
                     : "border border-line bg-white/5 text-fg"
