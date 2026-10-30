@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPrivacyOffset, isValidLatLng } from "@/lib/geo";
-import { newSession, verify } from "@/lib/auth";
+import { newSession, offsetSeed, verify } from "@/lib/auth";
 import type { JoinResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -10,8 +10,9 @@ export const dynamic = "force-dynamic";
 // POST /api/join — body { lat, lng } (raw coords) for a new session, or
 // { id, token, lat, lng } to rejoin after our row was reaped. The server
 // issues the id + signed token; the client never picks its own id.
-// Applies a 1–3 km privacy offset and upserts the presence row. Raw
-// coordinates are never stored.
+// Applies a 1–3 km privacy offset, seeded per session so a rejoin lands on
+// the same point, and upserts the presence row. Raw coordinates are never
+// stored.
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -35,7 +36,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "invalid session" }, { status: 401 });
   }
 
-  const offset = applyPrivacyOffset(lat as number, lng as number);
+  const offset = applyPrivacyOffset(
+    lat as number,
+    lng as number,
+    offsetSeed(session.id),
+  );
 
   await prisma.presence.upsert({
     where: { id: session.id },
