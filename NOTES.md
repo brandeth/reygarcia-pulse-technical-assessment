@@ -172,6 +172,13 @@ it at runtime instead of swapping the provided map library.
   few km apart are clearly separate dots. Trade-off: strangers further
   than roughly 20 km away start off-screen; zooming out finds them.
 
+- **Waiting for an answer.** A request silently expired after 30 s with
+  only a spinner, and once you'd tapped, the person's dot looked like
+  everyone else's. Now the status pill shows a ring that empties over
+  exactly the 30 s timeout (a CSS animation, no per-second re-renders;
+  measured in sync with the real timer), and the dot you called gets a
+  slowly orbiting dashed ring until they answer, decline, or it times out.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

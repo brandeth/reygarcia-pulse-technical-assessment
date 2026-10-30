@@ -369,6 +369,7 @@ export default function Home() {
         peers={peers}
         me={myLocation}
         onPeerClick={handlePeerClick}
+        targetId={conn.kind === "requesting" ? conn.peerId : null}
       />
 
       {gateMounted && (
@@ -381,7 +382,15 @@ export default function Home() {
           area that's still visible (the drawer is max-w-md = 28rem). */}
       <Toaster toasts={toasts} className={inChat ? "md:right-[28rem]" : ""}>
         {conn.kind === "requesting" && (
-          <StatusPill onCancel={cancelRequest}>Requesting connection…</StatusPill>
+          // Mounts with the request, so the ring and REQUEST_TIMEOUT_MS start
+          // together; keyed so a new request always gets a full ring.
+          <StatusPill
+            key={conn.peerId}
+            onCancel={cancelRequest}
+            countdownMs={REQUEST_TIMEOUT_MS}
+          >
+            Requesting connection…
+          </StatusPill>
         )}
         {video === "requesting" && (
           <StatusPill onCancel={cancelVideoRequest}>Requesting video…</StatusPill>

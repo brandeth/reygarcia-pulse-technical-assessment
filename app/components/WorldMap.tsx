@@ -14,11 +14,14 @@ export default function WorldMap({
   peers,
   me,
   onPeerClick,
+  targetId = null,
 }: {
   peers: PeerDot[];
   me: { lat: number; lng: number } | null;
   // Every tap is reported, busy or not; the page decides what it means.
   onPeerClick: (id: string, busy: boolean) => void;
+  // The peer we've asked to connect with, while we wait for an answer.
+  targetId?: string | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -182,6 +185,7 @@ export default function WorldMap({
         // back to "available" until the next poll.
         const el = marker.getElement();
         el.toggleAttribute("data-busy", peer.busy);
+        el.toggleAttribute("data-target", peer.id === targetId);
         el.setAttribute(
           "aria-label",
           peer.busy ? "Stranger, busy in another chat" : "Connect to a stranger",
@@ -202,7 +206,7 @@ export default function WorldMap({
     return () => {
       cancelled = true;
     };
-  }, [peers, ready]);
+  }, [peers, ready, targetId]);
 
   return (
     <div className="absolute inset-0">

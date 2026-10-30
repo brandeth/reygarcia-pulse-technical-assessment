@@ -59,6 +59,15 @@
     }
   }
 
+  /* Countdown ring: empties a pathLength=100 stroke. The duration is set
+     inline per use (e.g. the 30 s request timeout). */
+  --animate-countdown: countdown 30s linear forwards;
+  @keyframes countdown {
+    to {
+      stroke-dashoffset: 100;
+    }
+  }
+
   /* Entry gate dissolves as the camera starts flying. Opacity only (no
      movement), so it's kept under reduced motion too. */
   --animate-gate-out: gate-out 0.4s ease-out forwards;
@@ -161,6 +170,27 @@
   transform: scale(1.35);
 }
 
+/* Target: the person you've asked to connect with, until they answer. A
+   dashed amber ring orbits the dot so you don't lose track of who you
+   called on a busy map. */
+.pulse-dot[data-target] .pulse-dot-core {
+  transform: scale(1.2);
+}
+.pulse-dot[data-target] .pulse-dot-core::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 1.5px dashed var(--color-accent);
+  animation: dot-orbit 4s linear infinite;
+}
+
+@keyframes dot-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Busy (in another chat): a hollow, quiet ring that can't be requested. */
 .pulse-dot[data-busy] {
   cursor: not-allowed;
@@ -212,6 +242,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot-core,
+  .pulse-dot-core::before,
   .pulse-dot-core::after {
     animation: none;
   }
