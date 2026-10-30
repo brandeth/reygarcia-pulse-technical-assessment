@@ -155,6 +155,23 @@ it at runtime instead of swapping the provided map library.
   request that was auto-declined ("Request declined", which was
   misleading); it now sends nothing and says they're in another chat.
 
+- **"You" marker.** Your own position was a 📍 emoji, which every OS draws
+  differently and which didn't belong next to the glowing dots. It's now a
+  steady white light with a ring and a small glass "You" label: white, not
+  amber, because amber means "tap this" and you can't tap yourself, and no
+  heartbeat, so you're easy to find among twinkling strangers. It stacks
+  above nearby dots. While wiring its accessibility I found that Mapbox
+  stamps `role="img"` on any marker element without a role, so the peer
+  dots (real `<button>`s) were announced to screen readers as images; they
+  now set `role="button"` explicitly.
+
+- **Landing closer.** Testing with a friend a few km away, their dot sat
+  directly under my marker at the old landing zoom (country level), so
+  the header said "1 stranger online" but nobody was visible until I
+  zoomed in. The fly-in now lands at city level (zoom 11), where people a
+  few km apart are clearly separate dots. Trade-off: strangers further
+  than roughly 20 km away start off-screen; zooming out finds them.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
