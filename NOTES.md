@@ -268,3 +268,27 @@ it at runtime instead of swapping the provided map library.
   - Requests: 10/min per session.
   - Mailbox: 100 pending signals per recipient.
   Going over a limit returns 429. `/api/poll` deletes old counters.  
+
+## Phase 4 — Make it better
+
+**Connection arcs.** When two people connect anywhere, a light arc draws
+between their dots across the globe and stays while they talk, so the map
+shows a globe being used, not just dots sitting still.
+
+- **The server tells the map who is talking.** `/api/poll` now returns
+  `pairs`: live chats as `[idA, idB]`. A pair counts only when both rows
+  are busy and their `peerId`s point at each other, which happens once a
+  request is accepted. A pending request points one way only, so who is
+  calling whom never leaves the server before the other person agrees.
+  Only ids are sent: the client already has every dot's fuzzed position,
+  and `peerId` itself stays server-side. Your own chat is included, so
+  the poll now reads the caller's row too (one query instead of a second
+  lookup).
+  - *Privacy trade-off:* anyone can now see that two busy dots are
+    talking to each other, not just that both are busy. Both ends are
+    already fuzzed 1–3 km and anonymous, so I judged that acceptable for
+    the effect.
+  - *Verified* with three scripted sessions: no pair while idle or while
+    a request is pending; the pair appears for everyone after accept,
+    disappears after `end` and after `/api/leave`; `peerId` never appears
+    in the response.

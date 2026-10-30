@@ -29,6 +29,9 @@ export interface SignalMsg {
 export interface PollResponse {
   self: boolean; // false → caller's presence row is gone; client should rejoin
   peers: PeerDot[];
+  // Live chats on the map, as [idA, idB] with the smaller id first. Only
+  // accepted connections, never pending requests. May include the caller.
+  pairs: [string, string][];
   signals: SignalMsg[];
 }
 

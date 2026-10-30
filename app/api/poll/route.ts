@@ -47,14 +47,23 @@ export async function GET(request: NextRequest) {
     where: { expiresAt: { lt: new Date(now) } },
   });
 
-  // 3) Online peers, excluding self.
-  const peers = await prisma.presence.findMany({
-    where: {
-      id: { not: id },
-      lastSeen: { gte: staleCutoff },
-    },
-    select: { id: true, lat: true, lng: true, busy: true },
+  // 3) Everyone online, including the caller: their own chat is a pair too.
+  const online = await prisma.presence.findMany({
+    where: { lastSeen: { gte: staleCutoff } },
+    select: { id: true, lat: true, lng: true, busy: true, peerId: true },
   });
+  const peers = online.filter((p) => p.id !== id);
+
+  // Live chats: both busy and pointing at each other. A pending request
+  // only points one way, so who is calling whom never leaves the server.
+  // Each pair is emitted once, from its smaller id.
+  const byId = new Map(online.map((p) => [p.id, p]));
+  const pairs: [string, string][] = [];
+  for (const p of online) {
+    if (!p.busy || !p.peerId || p.id > p.peerId) continue;
+    const other = byId.get(p.peerId);
+    if (other?.busy && other.peerId === p.id) pairs.push([p.id, other.id]);
+  }
 
   // 4) Drain this user's mailbox: read, then delete exactly what we read so a
   // concurrently-inserted signal is never lost.
@@ -70,12 +79,14 @@ export async function GET(request: NextRequest) {
 
   const response: PollResponse = {
     self: heartbeat.count > 0,
+    // Explicit fields, so peerId stays server-side.
     peers: peers.map((p) => ({
       id: p.id,
       lat: p.lat,
       lng: p.lng,
       busy: p.busy,
     })),
+    pairs,
     signals: inbox.map((s) => ({
       id: s.id,
       fromId: s.fromId,
