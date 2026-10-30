@@ -28,7 +28,8 @@ When two people connect anywhere, a light arc draws between their dots across th
 | P4-01 | Poll returns connected pairs | S | — | [x] |
 | P4-02 | Great-circle arc geometry | S | — | [x] |
 | P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [x] |
-| P4-04 | The connect moment: burst at both ends | M | 03 | [ ] |
+| P4-04 | The connect moment: burst at both ends | M | 03 | [x] |
+| P4-04b | Arcs rise in 3D when the map is tilted | L | 03 | [x] |
 | P4-05 | Header: "N online · M chatting" | S | 01 | [ ] |
 | P4-06 | Multi-window test + NOTES Phase 4 section | M | 01–05 | [ ] |
 | P4-07 | *Optional:* consent-first video (blurred until you reveal) | S | — | [ ] |
@@ -48,6 +49,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 - **Do:** `arcCoordinates(a, b, steps = 64)` returns points along the great circle (slerp on unit vectors). Mapbox draws a long two-point line straight in Mercator, which looks wrong on the globe. Unwrap longitudes so an arc across the antimeridian stays one continuous line. Keep it dependency-free (no turf).
 - **Done when:** Tokyo → San Francisco curves over the Pacific (not across Asia/Europe), and two dots 3 km apart give a short, clean line.
 - **Done:** `arcCoordinates(a, b, steps = 64)` → `steps + 1` `[lng, lat]` points (fixed count so draw-in time doesn't depend on distance). Same-point / antipodal inputs fall back to a straight line. Checked with a Node script: Tokyo → SF midpoint 48.64° N, 172.26° W (North Pacific), end lng 237.58 (unwrapped); Manila → London midpoint 51.0° N, 81.5° E; Fiji → Samoa largest lng step 0.16°; route length = great-circle distance and every segment equal, for all cases.
+- **Tried and removed after P4-04:** a sideways `bow()` (20% of the length, toward the north) to make short arcs curve from above. It was a misread of the feedback: the wish was an arc that stands up when tilted (P4-04b), and the bow tipped that arch north. Arcs are plain great circles again.
 
 ### P4-03 · Arc layers on the map
 - **Files:** `app/components/WorldMap.tsx`, `lib/map-theme.ts` (colors), `app/page.tsx` (pass `pairs`)
@@ -66,6 +68,14 @@ When two people connect anywhere, a light arc draws between their dots across th
 - **Files:** `app/components/WorldMap.tsx`, `app/globals.css`
 - **Do:** when a pair first appears (not on the first poll after entering), each end gets a one-shot green ripple: a `data-burst` attribute on the marker element, styled on the inner core (Mapbox owns the outer element's inline styles; same lesson as P2-09), removed after the animation. Use `.pulse-me-core` when the end is you. Skipped under reduced motion.
 - **Done when:** a connection anywhere on screen is noticeable at a glance, without being loud.
+- **Done:** a `<span class="pulse-burst">` child instead of a `data-burst` attribute, so it can't clash with the core's `::before` (target orbit) / `::after` (heartbeat). `setArcs` now returns the keys that start drawing in (empty for seeded arcs and under reduced motion); `WorldMap` ripples the start dot at once and the far dot after `DRAW_MS`, removing each after `BURST_MS` (1.1 s). Own arc reordered to start at "You" (key unchanged). Ring: 12 px, `--color-live`, scale 0.6 → 4.5 over 0.9 s, plus a `::after` echo 0.2 s later. Verified with a MutationObserver: 0 ms / +1206 ms, removed after 1100 ms, own arc on `pulse-me` first, seeded → no ripple; frozen frame checked visually. Dev-only gotcha: a hot reload of `lib/arc-layer.ts` kept the old layer object (`drawing is not iterable`); a page reload fixes it, production is unaffected.
+
+### P4-04b · Arcs rise in 3D (added from testing)
+- **Why:** tilted (Ctrl + drag), the arcs were still painted flat on the ground.
+- **Tried first, dropped:** `line-z-offset` + `line-elevation-reference: "sea"` with a `["line-progress"]` sine expression. Mapbox's `drawLineTiles` returns early for elevated lines on the globe projection, and with `setProjection("mercator")` the raised arc was clipped per tile (a constant 500 m offset showed only one half, which half depending on the camera). No style setting fixed it (width, opacity, caps/joins, layer order all checked).
+- **Done:** `lib/arc-3d.ts`, a custom layer (`renderingMode: "3d"`) drawing ribbons from the same animation state: per vertex = segment ends (Mercator, relative to an origin), end flag, side, alpha, mine; the vertex shader extrudes in screen pixels; passes = glow (soft falloff) + core (AA rim), sparks = streak with a tail→head alpha ramp. Height `min(0.25 × distance, 300 km) × sin(π × progress)`, progress carried per point so a part-drawn arc keeps its final shape. Drawn only at zoom ≥ 6 (`customLayerMatrix()` is the Mercator matrix; the globe is flat from 6), cross-fading with the flat layers over 6–6.5 (`interpolate` on `zoom` in their opacity). Depth test and culling off. `arc-layer.ts` now builds `Line3D` lists once per frame and feeds both renderers; `lib/arcs.ts` gained `distanceMeters`.
+- **Follow-up (user: "it should not be tilted"):** from straight above the raised arch leaned away from the screen centre (perspective), and the bow tipped it north. Bow removed; the vertex shader scales height by `u_lift = smoothstep(pitch / 50°)` (`map.getPitch()` per frame, vertices unchanged), so the top view is a straight line and the arch rises upright as you tilt. Checked at pitch 0 / 25 / 60 / 72 (bearing −25).
+- **Verified:** pitch 62° arch from "You" over the city, top-down lands on both dots, zoom 9.5 meets the stranger's dot, globe zoom 3 clean, spark streak seen, no console errors/warnings. **Not checked:** phones / low-end GPUs (P2-20), reduced motion with 3D (no draw-in/sparks by the same rule, not looked at).
 
 ### P4-05 · Header: "N online · M chatting"
 - **Files:** `app/components/Header.tsx`, `app/page.tsx`

@@ -308,6 +308,50 @@ shows a globe being used, not just dots sitting still.
     Samoa crosses the antimeridian without a jump; every route's length
     equals the great-circle distance, with evenly spaced points.
 
+- **Arcs rise off the map in 3D.** Tilting the map (Ctrl + drag) showed
+  the arcs were still painted flat on the ground. I first tried Mapbox's
+  own raised lines (`line-z-offset`, height varying along the line), and
+  dropped them:
+  - Mapbox's renderer skips raised lines entirely on the globe
+    projection (`if (layer.hasElevatedBuckets && projection === "globe")
+    return;` in its draw code), so the arcs vanished.
+  - Even on a flat projection, the raised arc was clipped apart at tile
+    edges: Mapbox draws a GeoJSON line tile by tile and clips each piece
+    to its tile, and a raised line falls outside its tile's ground area
+    on screen. Which half disappeared changed with the camera.
+  So `lib/arc-3d.ts` is a custom WebGL layer: Mapbox hands it the camera
+  matrix, and it draws each arc as a ribbon of triangles with real height
+  (25% of the arc's length, capped at 300 km), touching the ground at
+  both dots. The vertex shader widens each segment in screen pixels, so
+  the line keeps the same width at any tilt or zoom; a soft glow pass and
+  a thin core pass match the flat look; the spark becomes a streak that
+  fades from tail to head. Vertices are stored relative to a nearby
+  origin (moved into the matrix in 64-bit JS), because Mercator
+  coordinates span 0–1 for the whole world and 32-bit floats made
+  zoomed-in arcs jitter.
+  - The custom layer's camera matrix is the flat (Mercator) one, which
+    only matches the screen once the globe has flattened out at zoom 6.
+    So below zoom 6 the flat arc layers draw (you look straight down at
+    a ball there, so height wouldn't show), and the two cross-fade over
+    zoom 6–6.5. The animation, draw-in, sparks and fades are shared: one
+    loop feeds both.
+  - **The arch stands straight up, and rises with the tilt.** Seen from
+    directly above, a raised arch appeared to lean away from the screen
+    centre (Mapbox's camera has perspective), so the top view showed a
+    curve that was really a leaning arch. Now the height follows the
+    map's pitch: flat from above, so the top view is a straight line
+    between the two dots, rising to full height by 50° (one shader
+    uniform, so tilting rebuilds nothing). An earlier sideways bow I'd
+    added for the top view is gone too: it tipped the whole arch north.
+  - *Trade-offs:* about 300 lines of WebGL instead of a style property;
+    the arcs are light, so they don't hide each other or the map (no
+    depth test).
+  - *Verified* in the browser with my arc to a stranger 5 km east: top
+    view a straight line between the dots; 25° gently lifted; 60° and
+    72° (rotated) an upright arch landing on both dots; on the globe
+    (zoom 3) the flat layers draw and nothing errors; the spark was
+    caught as a streak; no console errors or warnings.
+
 - **Arcs on the map.** `lib/arc-layer.ts` adds a GeoJSON source and four
   layers under the labels: a blurred glow and a thin core for the lines,
   and a two-layer "spark" that travels along each arc every few seconds.
@@ -330,3 +374,18 @@ shows a globe being used, not just dots sitting still.
     cleared when chats ended or the other side left; no console errors.
     The 1.2 s draw-in was caught part-drawn in one frame, but the
     screenshot tool can't sample fast enough to time it.
+
+- **The connect moment.** When a chat starts, a green ripple with a
+  fainter echo (the "lub-dub" again) spreads from the dot the arc leaves,
+  and another from the far dot just as the line reaches it, so a
+  connection reads as something travelling from one person to the other.
+  Your own arc always leaves from "You". The ripple is a short-lived child
+  element of the marker (Mapbox owns the marker element's own inline
+  styles, same lesson as the dot fixes in Phase 1 and 2), so it follows
+  the dot and fades with it behind the globe. No ripples for chats that
+  were already running when you entered, and none under reduced motion.
+  - *Verified* by logging ripple elements with a MutationObserver while
+    scripted strangers connected: start dot at 0 ms, far dot at +1206 ms
+    (draw-in is 1200 ms), each removed after 1.1 s, one per end; my own
+    chat rippled on "You" first; entering while a chat was running gave
+    no ripple.
