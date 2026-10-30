@@ -389,3 +389,19 @@ shows a globe being used, not just dots sitting still.
     (draw-in is 1200 ms), each removed after 1.1 s, one per end; my own
     chat rippled on "You" first; entering while a chat was running gave
     no ripple.
+
+- **The header counts chats too.** The status pill now reads e.g. "5
+  strangers online · 2 chats": one per arc on the map, yours included,
+  from the same `pairs` the arcs use, so the two always agree. It's
+  quieter (muted) than the online count and hidden when nobody is
+  talking, since "0 chats" is noise.
+  - *Bug found while testing it:* an arc that had just finished drawing
+    in stayed at its last in-between frame (64 of 65 points). The
+    animation only pushed new data while something was animating, and
+    the frame where the draw-in finishes no longer counts as animating.
+    It now pushes one more frame after the animation settles (same for
+    the end of a fade-in).
+  - *Verified* by logging the header every 0.5 s while scripted
+    strangers joined, connected, ended and left: 3·2 → 5·2 → 4·1 (my
+    caller left) → 4·2 → 4·1 → 2·1, always matching the arcs on the
+    map; fits on one line at 375 px.

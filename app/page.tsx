@@ -442,7 +442,10 @@ export default function Home() {
         <EntryGate onReady={handleReady} leaving={phase === "live"} />
       )}
 
-      {phase === "live" && <Header online={peers.length} />}
+      {phase === "live" && (
+        // Every live chat on the map, ours included: one per arc.
+        <Header online={peers.length} chats={pairs?.length ?? 0} />
+      )}
 
       {/* With the chat panel open on wide screens, center over the map
           area that's still visible (panel w-96 + 1rem gap = 25rem). */}

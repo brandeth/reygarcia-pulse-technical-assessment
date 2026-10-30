@@ -30,7 +30,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 | P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [x] |
 | P4-04 | The connect moment: burst at both ends | M | 03 | [x] |
 | P4-04b | Arcs rise in 3D when the map is tilted | L | 03 | [x] |
-| P4-05 | Header: "N online · M chatting" | S | 01 | [ ] |
+| P4-05 | Header: "N online · M chatting" | S | 01 | [x] |
 | P4-06 | Multi-window test + NOTES Phase 4 section | M | 01–05 | [ ] |
 | P4-07 | *Optional:* consent-first video (blurred until you reveal) | S | — | [ ] |
 | P4-08 | *Optional:* Leave & block | M | — | [ ] |
@@ -81,6 +81,8 @@ When two people connect anywhere, a light arc draws between their dots across th
 - **Files:** `app/components/Header.tsx`, `app/page.tsx`
 - **Do:** the status pill adds the number of live chats from `pairs.length` (e.g. "5 strangers online · 2 chats"). It stays "Just you right now" when you're alone.
 - **Done when:** the count matches the arcs on the map and updates with each poll.
+- **Done:** `Header` takes `chats` (`pairs?.length ?? 0` from `page.tsx`) and appends a muted "· N chat(s)" (the `·` is `aria-hidden`) only when `chats > 0`. Verified by sampling the header every 0.5 s through join / connect / end / leave (always equal to the arc count) and at 375 px (one line).
+- **Also fixed (arc-layer.ts):** the frame where a draw-in or fade-in finishes isn't "animating", so it was never pushed and the arc kept its 99% frame (64 of 65 points). `wasAnimating` now forces one more push after animation stops. Seen while testing: with the browser pane hidden, `requestAnimationFrame` pauses, so arcs freeze until the page is visible again (expected browser behaviour, catches up on return).
 
 ### P4-06 · Test + NOTES
 - **Test:** two windows show your own arc. To see a pair you're *not* part of, use four windows (two browsers × normal + private), mock locations far apart (e.g. Manila, Tokyo, San Francisco, London). Cases: connect → draw-in + burst; end → fade; close one tab mid-chat → `leave` clears it; reload while others are chatting → arcs present, no burst; reduced motion; phone width.
