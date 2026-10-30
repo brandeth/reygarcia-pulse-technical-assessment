@@ -85,4 +85,21 @@ need a network call, out of scope.)
     leaves or goes stale. A requester reaped mid-request leaves the
     target's Accept going nowhere (409, UI stuck on "connecting"). Request
     spam isn't rate-limited.
-  
+
+- **Rejoins leaked the real location (medium).** Every join drew a new
+  random 1–3 km offset, uniform in direction, from the same real
+  coordinates, so averaging the dot positions over many rejoins converges
+  on the true location. 3.1 stopped attackers forcing rejoins via `leave`,
+  but throttled tabs still rejoin on their own. Confirmed by forcing five
+  rejoins from DevTools: five different positions around one center.
+  Fix: `applyPrivacyOffset` takes its two random values as a parameter, and
+  `/api/join` seeds them with `offsetSeed(id)`, which derives them from
+  `HMAC(SESSION_SECRET, "offset:" + id)`. The same session always lands on
+  the same point, and a reload gets a new one. It's keyed rather than a plain
+  hash because ids are public: `sha256(id)` would let anyone recompute the
+  offset and subtract it from the dot.
+  - *Trade-offs:* each new session (reload, return visit) is still a new
+    sample, so someone watching a user reload many times could still
+    average. Fixing that needs a persistent per-person identity, which this
+    app deliberately doesn't have. Rotating `SESSION_SECRET` changes every
+    offset (sessions also end then, so that's harmless).  

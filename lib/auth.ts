@@ -27,3 +27,14 @@ export function verify(id: unknown, token: unknown): boolean {
   // leaks the length, which is the same for every valid token anyway.
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
+
+// Two stable values in [0, 1) per session for the privacy offset (lib/geo.ts).
+// Keyed with the secret: the id is public, so a plain hash of it would let
+// anyone recompute the offset and subtract it from the dot. The "offset:"
+// prefix keeps these bytes unrelated to the session token.
+export function offsetSeed(id: string): [number, number] {
+  const h = createHmac("sha256", secret())
+    .update("offset:" + id)
+    .digest();
+  return [h.readUInt32BE(0) / 2 ** 32, h.readUInt32BE(4) / 2 ** 32];
+}
