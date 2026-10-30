@@ -26,7 +26,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 | ID | Task | Size | Depends on | Status |
 |----|------|------|-----------|--------|
 | P4-01 | Poll returns connected pairs | S | — | [x] |
-| P4-02 | Great-circle arc geometry | S | — | [ ] |
+| P4-02 | Great-circle arc geometry | S | — | [x] |
 | P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [ ] |
 | P4-04 | The connect moment: burst at both ends | M | 03 | [ ] |
 | P4-05 | Header: "N online · M chatting" | S | 01 | [ ] |
@@ -47,6 +47,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 - **Files:** new `lib/arcs.ts`
 - **Do:** `arcCoordinates(a, b, steps = 64)` returns points along the great circle (slerp on unit vectors). Mapbox draws a long two-point line straight in Mercator, which looks wrong on the globe. Unwrap longitudes so an arc across the antimeridian stays one continuous line. Keep it dependency-free (no turf).
 - **Done when:** Tokyo → San Francisco curves over the Pacific (not across Asia/Europe), and two dots 3 km apart give a short, clean line.
+- **Done:** `arcCoordinates(a, b, steps = 64)` → `steps + 1` `[lng, lat]` points (fixed count so draw-in time doesn't depend on distance). Same-point / antipodal inputs fall back to a straight line. Checked with a Node script: Tokyo → SF midpoint 48.64° N, 172.26° W (North Pacific), end lng 237.58 (unwrapped); Manila → London midpoint 51.0° N, 81.5° E; Fiji → Samoa largest lng step 0.16°; route length = great-circle distance and every segment equal, for all cases.
 
 ### P4-03 · Arc layers on the map
 - **Files:** `app/components/WorldMap.tsx`, `lib/map-theme.ts` (colors), `app/page.tsx` (pass `pairs`)
