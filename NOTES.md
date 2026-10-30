@@ -94,6 +94,17 @@ it at runtime instead of swapping the provided map library.
   included. It now reads "Just you right now" / "N strangers online".
   The old pill also covered the Mapbox logo, which has to stay visible.
 
+- **Toasts, and a deferred Phase 1 bug.** `showNotice` stored one message
+  in a single slot and started a 3.5 s timer that cleared *the slot*, so
+  an older timer wiped newer notices early: a notice shown 3 s after
+  another lasted 0.5 s, and "Session expired" could be erased by a
+  leftover timer, leaving a dead page with no explanation. Replaced it
+  with a small toast queue (`app/components/Toasts.tsx`): each toast owns
+  its own timer, up to 3 stack, errors (network, camera, session) get a
+  rose variant, and an always-mounted polite live region announces them
+  to screen readers. Measured: a toast fired 3 s after another now keeps
+  its full 3.5 s.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

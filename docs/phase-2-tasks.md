@@ -12,7 +12,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-02b | Shared `Button` component | 2a | S | 02 | [x] |
 | P2-03 | Restyle the Mapbox map | 2a | M | 02 | [x] |
 | P2-04 | Header: wordmark + online count | 2a | S | 02 | [x] |
-| P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [ ] |
+| P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [x] |
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [ ] |
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [ ] |
 | P2-08 | Entry screen redesign | 2a | M | 07 | [ ] |
@@ -86,10 +86,11 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/page.tsx`, new `app/components/Toasts.tsx` (hook + view)
 - **Do:** `useToasts` with a per-toast id and timer (fixes the overlapping timers in `showNotice`); info / error variants; max 2–3 stacked; `aria-live="polite"`; enter/exit animation.
 - **Done when:** two notices in quick succession each get their full duration, and the earlier timer no longer clears the newer one.
+- **Done:** `app/components/Toasts.tsx` (`useToasts` + `Toaster`). Per-toast timers, info / error variants (error = rose dot + border), max 3, `role="status"` live region, drop-in / fade-out animation tokens. "Session expired" is a sticky error toast until P2-06 makes it a banner. Measured: toast A 6 → 3713 ms, toast B (fired at 3 s) 3018 → 6744 ms, i.e. B keeps its full 3.5 s.
 
 ### P2-06 · Status pill + session-expired banner
 - **Files:** `app/page.tsx`
-- **Do:** one persistent status slot for "Requesting…" and "Waiting for video…" (now kept separate from toasts, which sat at the same `top-20` spot); "Session expired" becomes a banner with a Reload button.
+- **Do:** one persistent status slot for "Requesting…" and "Waiting for video…", kept clear of the toast stack (toasts now sit at `top-[4.5rem]`; the requesting pill still sits at `top-20` and can overlap them); "Session expired" becomes a banner with a Reload button, replacing the sticky toast.
 - **Done when:** status and toasts never overlap, and the expired state has a way out.
 
 ## Phase 2a — Screens
