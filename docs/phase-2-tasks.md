@@ -10,7 +10,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-01 | Pick visual direction | 2a | S | — | [x] |
 | P2-02 | Design tokens + base styles | 2a | S | 01 | [x] |
 | P2-02b | Shared `Button` component | 2a | S | 02 | [x] |
-| P2-03 | Restyle the Mapbox map | 2a | M | 02 | [ ] |
+| P2-03 | Restyle the Mapbox map | 2a | M | 02 | [x] |
 | P2-04 | Header: wordmark + online count | 2a | S | 02 | [ ] |
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [ ] |
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [ ] |
@@ -30,6 +30,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [ ] |
 | P2-20 | Real-device QA | 2b | M | 16–18 | [ ] |
 | P2-21 | NOTES.md Phase 2 section | 2b | S | all | [ ] |
+| P2-22 | *Optional:* light/dark theme toggle | 2b | L | everything else | [ ] |
 
 ---
 
@@ -70,6 +71,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/WorldMap.tsx`
 - **Do:** after `load`, `setPaintProperty` on water / land / borders / labels to match the palette; `setFog` for horizon glow + starfield. Optional: compare Mapbox Standard (night preset) and switch only if clearly better.
 - **Done when:** the map reads as part of the design, not stock `dark-v11`.
+- **Done:** `lib/map-theme.ts` recolors the layers by role (background / fill / line / symbol, matched on layer id) and sets a night-sky fog (navy rim, light starfield); wired via `map.on("style.load")`. dark-v11 already ships `projection: globe`, so no projection change. Mapbox Standard not adopted: the restyled dark-v11 already fits, and Standard is heavier.
 
 ### P2-04 · Header: wordmark + online count
 - **Files:** `app/page.tsx`, `app/components/WorldMap.tsx` (move the counter out), new `app/components/Header.tsx`
@@ -149,6 +151,19 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-20 · Real-device QA
 - iOS Safari (camera, `playsInline`, keyboard), Android Chrome, narrow widths, two-user run on the Vercel URL.
+
+### P2-22 · *Optional:* light/dark theme toggle (deferred)
+- **When:** only after every other Phase 2 and Phase 4 task is done. Skipping it is a valid outcome.
+- **Files:** `app/globals.css`, `app/layout.tsx`, `lib/map-theme.ts`, new `app/components/ThemeToggle.tsx`, plus a light pass over every screen.
+- **Do:**
+  - Tokens point at CSS variables that switch under `[data-theme="light"]`.
+  - A light palette in `lib/map-theme.ts`, re-applied when the theme changes.
+  - A light design for the dots (a glow has no contrast on a light map).
+  - Follow `prefers-color-scheme` by default; a sun/moon `Button size="icon"` overrides it.
+  - Apply the saved choice before hydration (inline script or `next-themes`) so the page never flashes the wrong theme.
+- **Trade-offs to note in NOTES:** the saved choice lives in `localStorage` (a UI preference, not user data, but worth saying given "nothing stored"); every screen has to be checked in both modes.
+- **If skipped:** NOTES says dark-only is deliberate, because the product is a night-sky globe of glowing dots.
+- **Done when:** every screen and the map look intentional in both modes, the toggle works with keyboard and screen readers, and there's no flash on reload.
 
 ### P2-21 · NOTES.md Phase 2 section
 - Direction and why · kept Mapbox and restyled it at runtime · UX fixes (toast queue, ended state, request countdown) · what's next. Before/after screenshots if there's room.
