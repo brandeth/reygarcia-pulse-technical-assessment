@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { SignalType } from "@/lib/types";
 import { verify } from "@/lib/auth";
+import { overLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,11 @@ const VALID_TYPES: SignalType[] = [
 ];
 
 const MAX_PAYLOAD = 64 * 1024; // SDP/ICE are small; cap to be safe.
+// Only WebRTC signaling carries a payload; everything else is a bare event.
+const PAYLOAD_TYPES: SignalType[] = ["offer", "answer", "ice"];
+// Pending (undrained) signals per recipient. A healthy client drains its
+// mailbox every poll (1.5 s), so this is only reached by flooding.
+const MAX_MAILBOX = 100;
 
 // POST /api/signal — body { fromId, toId, type, payload? }
 // Drops one message into the recipient's mailbox. The server owns the
@@ -63,6 +69,25 @@ export async function POST(request: NextRequest) {
 
   const signalType = type as SignalType;
   const payloadStr = typeof payload === "string" ? payload : null;
+  if (payloadStr !== null && !PAYLOAD_TYPES.includes(signalType)) {
+    return Response.json({ error: "invalid payload" }, { status: 400 });
+  }
+
+  // Per-session limits. These run after verify() so nobody can burn
+  // another user's quota by sending with their id. ICE gathers candidates
+  // in bursts, so the overall limit is generous; requests are what a
+  // spammer would repeat, so they get a tight one.
+  const limited =
+    (await overLimit("signal", fromId, 120)) ??
+    (signalType === "request" ? await overLimit("request", fromId, 10) : null);
+  if (limited) return limited;
+
+  // Checked before any state change below, so a rejected signal never
+  // leaves busy/peerId half-updated.
+  const pending = await prisma.signal.count({ where: { toId } });
+  if (pending >= MAX_MAILBOX) {
+    return Response.json({ error: "mailbox full" }, { status: 429 });
+  }
 
   const [sender, target] = await Promise.all([
     prisma.presence.findUnique({

@@ -35,3 +35,13 @@ model Signal {
 
   @@index([toId])
 }
+
+model RateLimit {
+  // Fixed-window counters (lib/rate-limit.ts). key = "<bucket>:<who>:<slot>",
+  // so each window counts in its own row; /api/poll deletes expired rows.
+  key       String   @id
+  count     Int
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}

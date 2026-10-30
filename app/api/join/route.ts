@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { applyPrivacyOffset, isValidLatLng } from "@/lib/geo";
 import { newSession, offsetSeed, verify } from "@/lib/auth";
 import type { JoinResponse } from "@/lib/types";
+import { clientIp, overLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
 
   let session: JoinResponse;
   if (id === undefined && token === undefined) {
+    // Only new sessions are limited: they're what fills the map with dots.
+    // A verified rejoin just re-creates the caller's own row.
+    const limited = await overLimit("join", clientIp(request), 10);
+    if (limited) return limited;
     session = newSession();
   } else if (verify(id, token)) {
     session = { id: id as string, token: token as string };
