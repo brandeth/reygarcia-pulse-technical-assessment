@@ -140,6 +140,21 @@ it at runtime instead of swapping the provided map library.
   how to re-allow it), and the button says "Joining…" during the server
   call instead of "Locating…". The gate dissolves as the camera flies in.
 
+- **Dots, and a busy-state bug.** Busy dots flashed back to "available"
+  whenever you panned or zoomed, then went busy again a second later.
+  Found it in Mapbox's source: `Marker._evaluateOpacity()` rewrites the
+  marker element's inline `opacity` on every camera move (to fade dots
+  behind the globe), and our busy style was inline opacity on that same
+  element, so it only came back on the next poll. Same lesson as the
+  Phase 1 drift fix: Mapbox owns the marker element's inline styles.
+  State is now a `data-busy` attribute styled on an inner element.
+  The redesign itself: dots show state instead of random colors (amber
+  glow and heartbeat = available, hollow gray ring = busy), twinkle out
+  of sync, animate in and out, and the pulse animates transform/opacity
+  instead of repainting a box-shadow. Tapping a busy dot used to send a
+  request that was auto-declined ("Request declined", which was
+  misleading); it now sends nothing and says they're in another chat.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

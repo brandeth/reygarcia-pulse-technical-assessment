@@ -8,24 +8,17 @@ import { applyNightSignal, hideLabels, showLabels } from "@/lib/map-theme";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
-function dotColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  }
-  return `hsl(${Math.abs(hash) % 360}, 70%, 60%)`;
-}
+const DOT_EXIT_MS = 300; // matches dot-out in globals.css
 
 export default function WorldMap({
   peers,
   me,
   onPeerClick,
-  canConnect,
 }: {
   peers: PeerDot[];
   me: { lat: number; lng: number } | null;
-  onPeerClick: (id: string) => void;
-  canConnect: boolean;
+  // Every tap is reported, busy or not; the page decides what it means.
+  onPeerClick: (id: string, busy: boolean) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -33,13 +26,11 @@ export default function WorldMap({
   const meMarkerRef = useRef<Marker | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Marker click handlers are bound once, so read the live click handler +
-  // connectability through refs (synced in an effect, never during render).
+  // Marker click handlers are bound once, so read the live click handler
+  // through a ref (synced in an effect, never during render).
   const onPeerClickRef = useRef(onPeerClick);
-  const canConnectRef = useRef(canConnect);
   useEffect(() => {
     onPeerClickRef.current = onPeerClick;
-    canConnectRef.current = canConnect;
   });
 
   // Initialise the map once.
@@ -160,31 +151,42 @@ export default function WorldMap({
         let marker = markers.get(peer.id);
         if (!marker) {
           const el = document.createElement("button");
+          el.type = "button";
           el.className = "pulse-dot";
-          el.title = "Tap to connect";
-          // Mapbox positions `el` via an inline transform, so all visual
-          // styling (color, hover scale) lives on this inner element.
+          // Mapbox owns this element's inline transform/opacity, so all
+          // visuals live on the inner core (see .pulse-dot in globals.css).
           const core = document.createElement("span");
           core.className = "pulse-dot-core";
-          core.style.background = dotColor(peer.id);
+          // Random phase so the dots twinkle independently.
+          core.style.setProperty("--dot-delay", `${-Math.random() * 2.4}s`);
           el.appendChild(core);
           el.addEventListener("click", (e) => {
             e.stopPropagation();
-            if (canConnectRef.current) onPeerClickRef.current(peer.id);
+            onPeerClickRef.current(peer.id, el.hasAttribute("data-busy"));
           });
           marker = new mapboxgl.Marker({ element: el })
             .setLngLat([peer.lng, peer.lat])
             .addTo(map);
           markers.set(peer.id, marker);
         }
-        marker.getElement().style.opacity = peer.busy ? "0.35" : "1";
+        // Busy is a data attribute, not inline opacity: Mapbox rewrites the
+        // marker's opacity on every pan/zoom, which used to flash busy dots
+        // back to "available" until the next poll.
+        const el = marker.getElement();
+        el.toggleAttribute("data-busy", peer.busy);
+        el.setAttribute(
+          "aria-label",
+          peer.busy ? "Stranger, busy in another chat" : "Connect to a stranger",
+        );
+        el.setAttribute("aria-disabled", String(peer.busy));
       }
 
-      // Drop markers for peers that went offline / got filtered out.
+      // Peers that went offline shrink away, then their marker is removed.
       for (const [id, marker] of markers) {
         if (!seen.has(id)) {
-          marker.remove();
           markers.delete(id);
+          marker.getElement().setAttribute("data-leaving", "");
+          setTimeout(() => marker.remove(), DOT_EXIT_MS);
         }
       }
     })();
