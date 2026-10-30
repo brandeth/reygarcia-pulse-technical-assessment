@@ -45,6 +45,11 @@ export function arcCoordinates(
   return unwrap(coords);
 }
 
+// Distance between two dots along the globe's surface, in meters.
+export function distanceMeters(a: LatLng, b: LatLng): number {
+  return Math.acos(clamp(dot(toVector(a), toVector(b)), -1, 1)) * 6_371_000;
+}
+
 // A point on the globe as a unit vector from the Earth's center.
 type Vec = [number, number, number];
 
