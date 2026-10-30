@@ -86,7 +86,10 @@ export default function EntryGate({
           Pulse
         </h1>
         <p className="mt-3 max-w-sm text-base text-fg/80 sm:text-lg">
-          A living globe of anonymous strangers. Drop onto the map and connect.
+          {/* Desktop: one sentence per line. Phones wrap naturally. */}
+          A living globe of anonymous strangers.{" "}
+          <br className="hidden sm:inline" />
+          Drop onto the map and connect.
         </p>
 
         <Button
@@ -120,7 +123,10 @@ export default function EntryGate({
 
         <ul className="mx-auto mt-10 grid w-fit gap-3 text-left text-sm text-muted sm:w-full sm:grid-cols-3 sm:gap-4 sm:text-center">
           <TrustPoint icon={<UserIcon />}>
-            No account. <span className="whitespace-nowrap">No sign-up.</span>
+            No account.{" "}
+            {/* Two lines on desktop, matching the other two points. */}
+            <br className="hidden sm:inline" />
+            <span className="whitespace-nowrap">No sign-up.</span>
           </TrustPoint>
           <TrustPoint icon={<PinIcon />}>
             Your dot lands <span className="whitespace-nowrap">1–3 km</span> from you.
