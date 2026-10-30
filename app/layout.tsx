@@ -23,9 +23,15 @@ export const metadata: Metadata = {
   description: "A living globe of anonymous strangers. Tap a dot, start talking.",
 };
 
-// Tints the mobile browser chrome to match the app background (--color-ink).
 export const viewport: Viewport = {
+  // Tints the mobile browser chrome to match the app background (--color-ink).
   themeColor: "#070b14",
+  // Edge-to-edge map on notched phones; UI pads itself with the --safe-*
+  // insets from globals.css.
+  viewportFit: "cover",
+  // On Android, shrink the layout when the keyboard opens, so the chat
+  // input stays above it instead of underneath.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

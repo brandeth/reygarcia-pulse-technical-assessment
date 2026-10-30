@@ -188,6 +188,17 @@ it at runtime instead of swapping the provided map library.
   tab flashes its title ("● Someone wants to connect") until it's seen.
   The video request uses the same card, centered beside the chat.
 
+- **Chat.** The chat was a full-height black drawer that hid the map on
+  desktop and the whole screen on phones. On desktop it's now a floating
+  glass panel beside the map; on phones it's a bottom sheet that leaves
+  the top of the map in view. The stranger gets an avatar drawn like
+  their dot, "Connected" uses the green live color, consecutive messages
+  group into blocks, and a quiet line says messages are peer-to-peer and
+  never stored. Mobile details: the app now draws edge to edge on notched
+  phones with every bottom-anchored control padded clear of the home bar,
+  Android shrinks the layout when the keyboard opens, and the input is
+  16px so iOS doesn't zoom into it.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

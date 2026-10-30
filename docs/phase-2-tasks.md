@@ -20,7 +20,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [x] |
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [x] |
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [x] |
-| P2-13 | Chat panel layout | 2a | L | 02 | [ ] |
+| P2-13 | Chat panel layout | 2a | L | 02 | [x] |
 | P2-14 | Chat "ended" state | 2a | M | 13 | [ ] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [ ] |
 | — | *Phase 4 feature, built in the new style* | P4 | — | 2a done | — |
@@ -141,6 +141,9 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/ChatPanel.tsx`
 - **Do:** turn on `viewportFit: "cover"` in `layout.tsx` and pad with `--safe-bottom` (also check VideoPanel's bottom bar and any other bottom-anchored UI); floating glass panel on desktop, bottom sheet on mobile; stranger avatar in their dot color; grouped bubbles; inline system lines ("Connected · peer-to-peer"); "Connected" status uses the green `live` token; Video / End as icon buttons.
 - **Done when:** the map stays partly visible on desktop, and on mobile the input isn't covered by the on-screen keyboard.
+- **Done:** `ChatPanel` is a `<section>`: bottom sheet (`h-[72dvh]`, `rounded-t-panel`) on phones, floating glass panel (`md:w-96`, 1rem gaps, below the header) from `md`. Header: amber avatar, green `live` "Connected", `Button size="icon"` video, danger "End". `role="log"` message list with grouped bubbles (flattened inner corners, `mt-0.5` within a group), a lock line about peer-to-peer, `[overflow-wrap:anywhere]` for long words. Input `text-base` on phones (no iOS zoom), `enterKeyHint="send"`, icon Send. `viewportFit: "cover"` + `interactiveWidget: "resizes-content"` on; Mapbox bottom controls and the video bar padded with `--safe-*`. Toast column / video card offsets 28rem → 25rem.
+- **Not verified:** real keyboards (iOS/Android) → P2-20. Avatar is uniform amber (dots no longer have per-user colors, P2-09).
+- **Follow-up idea:** on phones the "You" marker sits behind the sheet; pad the map camera by the sheet's height while chatting so it stays in the visible strip.
 
 ### P2-14 · Chat "ended" state
 - **Files:** `app/page.tsx` (new `Conn` kind), `app/components/ChatPanel.tsx`
