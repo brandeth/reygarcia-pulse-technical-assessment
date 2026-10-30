@@ -307,3 +307,26 @@ shows a globe being used, not just dots sitting still.
     the North Pacific, Manila → London passes over Central Asia, Fiji →
     Samoa crosses the antimeridian without a jump; every route's length
     equals the great-circle distance, with evenly spaced points.
+
+- **Arcs on the map.** `lib/arc-layer.ts` adds a GeoJSON source and four
+  layers under the labels: a blurred glow and a thin core for the lines,
+  and a two-layer "spark" that travels along each arc every few seconds.
+  A new chat's arc draws itself in from one dot to the other (1.2 s),
+  stays lit while they talk, and fades out (0.6 s) when the chat ends.
+  Green, not amber: it's a live status, not something you can tap. Your
+  own chat's arc starts at "You" and is brighter than strangers' arcs.
+  - Mapbox paint properties apply to a whole layer, so a per-arc draw-in
+    can't use `line-trim-offset`. Instead one `requestAnimationFrame` loop
+    rewrites the source data (`setData`) each frame, and only runs while
+    something moves; when nobody is chatting it stops completely.
+  - Chats already going when you enter fade in instead of drawing in, so
+    entering doesn't animate every arc at once. Under reduced motion,
+    arcs only fade in and out, with no draw-in and no sparks.
+  - Capped at 100 arcs so a very busy map stays smooth.
+  - *Verified* in the browser with scripted sessions: two strangers near
+    Manila connecting drew an arc between their (now busy) dots; a Tokyo
+    ↔ San Francisco chat curved over the Pacific on the globe; a stranger
+    who requested me and was accepted got a brighter arc from "You"; arcs
+    cleared when chats ended or the other side left; no console errors.
+    The 1.2 s draw-in was caught part-drawn in one frame, but the
+    screenshot tool can't sample fast enough to time it.
