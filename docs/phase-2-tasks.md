@@ -9,7 +9,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 |----|------|-------|------|-----------|--------|
 | P2-01 | Pick visual direction | 2a | S | — | [x] |
 | P2-02 | Design tokens + base styles | 2a | S | 01 | [x] |
-| P2-02b | Shared `Button` component | 2a | S | 02 | [ ] |
+| P2-02b | Shared `Button` component | 2a | S | 02 | [x] |
 | P2-03 | Restyle the Mapbox map | 2a | M | 02 | [ ] |
 | P2-04 | Header: wordmark + online count | 2a | S | 02 | [ ] |
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [ ] |
@@ -62,7 +62,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-02b · Shared `Button` component
 - **Files:** new `app/components/Button.tsx`
-- **Do:** one button with variants: `primary` (amber: Enter, Accept, Send), `secondary` (glass/outline: Decline, Cancel), `danger` (rose: End, End video), `icon` (round: video/mic/camera toggles). Sizes sm / md / lg; shared hover, press, disabled and focus styles; passes through native `<button>` props.
+- **Do:** one button with variants `primary` (amber: Enter, Accept, Send), `secondary` (glass/outline: Decline, Cancel), `danger` (rose: End, End video), and sizes sm / md / lg / `icon` (round: video/mic/camera toggles). Icon is a size, not a variant, so an icon button can still be danger (end call). Shared hover, press, disabled and focus styles; passes through native `<button>` props; defaults to `type="button"`; TypeScript requires `aria-label` on icon buttons.
 - **Why:** five components each hardcode their own button classes today; restyling them separately would drift. Screen tasks (06, 08, 11–15) swap in `<Button variant=…>` instead.
 - **Done when:** the component exists and is used by the first screen task that needs it (no screen is migrated in this task itself).
 

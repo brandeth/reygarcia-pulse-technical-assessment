@@ -66,6 +66,13 @@ it at runtime instead of swapping the provided map library.
   an amber `:focus-visible` ring for keyboard users, and a `theme-color`
   meta so the mobile browser bar matches the app.
 
+- **One shared `Button`.** Each screen hardcoded its own button classes
+  (different padding, hovers, disabled states). `app/components/Button.tsx`
+  now owns them: primary / secondary / danger variants and sm / md / lg /
+  icon sizes, with shared press, disabled, focus and reduced-motion
+  behavior. It defaults to `type="button"` (only Send submits the chat
+  form), and icon-only buttons require an `aria-label` at the type level.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
