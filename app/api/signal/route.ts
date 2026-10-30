@@ -19,8 +19,18 @@ const VALID_TYPES: SignalType[] = [
 const MAX_PAYLOAD = 64 * 1024; // SDP/ICE are small; cap to be safe.
 
 // POST /api/signal — body { fromId, toId, type, payload? }
-// Drops one message into the recipient's mailbox. Also manages the `busy`
-// flag so a user can only be in one connection at a time.
+// Drops one message into the recipient's mailbox. The server owns the
+// connection state (busy + peerId) and only delivers a signal that is a valid
+// next step from that state, so a client can't pair, free or message
+// strangers:
+//
+//   request           sender not busy              → sender.peerId = toId
+//   accept            toId requested sender,
+//                     neither busy                 → both busy + paired
+//   decline           toId requested sender        → toId.peerId cleared
+//   end               sender.peerId === toId       → sender freed (and toId,
+//                     (hang up, or cancel request)   if it points back)
+//   offer/answer/ice  sender busy + paired with toId
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -54,37 +64,75 @@ export async function POST(request: NextRequest) {
   const signalType = type as SignalType;
   const payloadStr = typeof payload === "string" ? payload : null;
 
-  // Enforce "one active connection at a time": if the target is already busy,
-  // auto-decline the request instead of delivering it.
-  if (signalType === "request") {
-    const target = await prisma.presence.findUnique({
+  const [sender, target] = await Promise.all([
+    prisma.presence.findUnique({
+      where: { id: fromId },
+      select: { busy: true, peerId: true },
+    }),
+    prisma.presence.findUnique({
       where: { id: toId },
-      select: { busy: true },
-    });
-    if (!target) {
-      // Target went offline — tell the initiator it was declined.
-      await sendDecline(toId, fromId);
-      return Response.json({ ok: true, autoDeclined: true });
-    }
-    if (target.busy) {
-      await sendDecline(toId, fromId);
-      return Response.json({ ok: true, autoDeclined: true });
-    }
-  }
+      select: { busy: true, peerId: true },
+    }),
+  ]);
+  // Sender's row was reaped — their next poll rejoins them.
+  if (!sender) return conflict();
 
-  // Busy transitions:
-  // - accept: the connection is now active → mark BOTH peers busy.
-  // - decline/end: free both peers.
-  if (signalType === "accept") {
-    await prisma.presence.updateMany({
-      where: { id: { in: [fromId, toId] } },
-      data: { busy: true },
-    });
-  } else if (signalType === "decline" || signalType === "end") {
-    await prisma.presence.updateMany({
-      where: { id: { in: [fromId, toId] } },
-      data: { busy: false },
-    });
+  switch (signalType) {
+    case "request": {
+      if (sender.busy) return conflict();
+      // Enforce "one active connection at a time": if the target is offline
+      // or busy, auto-decline the request instead of delivering it.
+      if (!target || target.busy) {
+        await sendDecline(toId, fromId);
+        return Response.json({ ok: true, autoDeclined: true });
+      }
+      await prisma.presence.updateMany({
+        where: { id: fromId },
+        data: { peerId: toId },
+      });
+      break;
+    }
+    case "accept": {
+      if (!target || target.peerId !== fromId || sender.busy || target.busy) {
+        return conflict();
+      }
+      await prisma.presence.updateMany({
+        where: { id: fromId },
+        data: { busy: true, peerId: toId },
+      });
+      await prisma.presence.updateMany({
+        where: { id: toId },
+        data: { busy: true },
+      });
+      break;
+    }
+    case "decline": {
+      if (!target || target.peerId !== fromId || target.busy) {
+        return conflict();
+      }
+      await prisma.presence.updateMany({
+        where: { id: toId },
+        data: { peerId: null },
+      });
+      break;
+    }
+    case "end": {
+      if (sender.peerId !== toId) return conflict();
+      // Paired → free both. Pending request (only sender points) → just the
+      // sender; the target was never marked.
+      const paired = target?.peerId === fromId;
+      await prisma.presence.updateMany({
+        where: { id: paired ? { in: [fromId, toId] } : fromId },
+        data: { busy: false, peerId: null },
+      });
+      break;
+    }
+    case "offer":
+    case "answer":
+    case "ice": {
+      if (!sender.busy || sender.peerId !== toId) return conflict();
+      break;
+    }
   }
 
   await prisma.signal.create({
@@ -92,6 +140,11 @@ export async function POST(request: NextRequest) {
   });
 
   return Response.json({ ok: true });
+}
+
+// Signal doesn't fit the current connection state.
+function conflict() {
+  return Response.json({ error: "invalid state" }, { status: 409 });
 }
 
 // Helper: deliver an auto-decline from `target` back to `initiator`.

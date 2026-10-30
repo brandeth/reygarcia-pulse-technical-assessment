@@ -86,6 +86,8 @@ export default function Home() {
       onRemoteStream: (stream) => setRemoteStream(stream),
       onConnectionState: (state) => {
         if (state === "failed") {
+          // Tell the server too, or both of us stay busy + paired.
+          void sendSignal(sessionId, peerId, "end");
           teardown("Connection failed (network).");
         }
       },
@@ -95,6 +97,7 @@ export default function Home() {
       onChannelClose: () => {
         // Guard: our own teardown closes the channel too.
         if (peerRef.current === ps) {
+          void sendSignal(sessionId, peerId, "end");
           teardown("Stranger disconnected.");
         }
       },
@@ -313,10 +316,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!sessionId || phase !== "live") return;
-    const onLeave = () => {
-      const c = connRef.current;
-      leave(sessionId, c.kind !== "idle" ? c.peerId : undefined);
-    };
+    // The server knows who we're linked to, so leave only sends our id.
+    const onLeave = () => leave(sessionId);
     // pagehide alone covers tab close, navigation and bfcache entry;
     // beforeunload was redundant and can make the page bfcache-ineligible.
     window.addEventListener("pagehide", onLeave);
