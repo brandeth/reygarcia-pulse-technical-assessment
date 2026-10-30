@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { SignalType } from "@/lib/types";
+import { verify } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,8 +34,11 @@ export async function POST(request: NextRequest) {
     unknown
   >;
 
-  if (typeof fromId !== "string" || typeof toId !== "string") {
+  if (!isValidId(fromId) || !isValidId(toId) || fromId === toId) {
     return Response.json({ error: "invalid ids" }, { status: 400 });
+  }
+  if (!verify(fromId, request.headers.get("x-pulse-token"))) {
+    return Response.json({ error: "invalid session" }, { status: 401 });
   }
   if (typeof type !== "string" || !VALID_TYPES.includes(type as SignalType)) {
     return Response.json({ error: "invalid type" }, { status: 400 });
@@ -100,4 +104,8 @@ async function sendDecline(targetId: string, initiatorId: string) {
       payload: null,
     },
   });
+}
+
+function isValidId(v: unknown): v is string {
+  return typeof v === "string" && v.length >= 8 && v.length <= 64;
 }

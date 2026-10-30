@@ -31,3 +31,8 @@ export interface PollResponse {
   peers: PeerDot[];
   signals: SignalMsg[];
 }
+
+export interface JoinResponse {
+  id: string;
+  token: string;
+}
