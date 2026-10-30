@@ -41,7 +41,9 @@ export default function EntryGate({
   }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-8 bg-zinc-950 p-6 text-zinc-100">
+    // An overlay on the spinning globe (the map is already mounted behind it);
+    // the scrim keeps the text readable. Full visual pass is P2-08.
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-8 bg-ink/55 p-6 text-zinc-100">
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight">Pulse</h1>
         <p className="mt-2 max-w-sm text-zinc-400">

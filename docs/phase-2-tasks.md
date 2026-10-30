@@ -14,7 +14,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-04 | Header: wordmark + online count | 2a | S | 02 | [x] |
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [x] |
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [x] |
-| P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [ ] |
+| P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [x] |
 | P2-08 | Entry screen redesign | 2a | M | 07 | [ ] |
 | P2-09 | Dot redesign | 2a | M | 03 | [ ] |
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [ ] |
@@ -100,6 +100,8 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/page.tsx`, `app/components/WorldMap.tsx`, `app/components/EntryGate.tsx`
 - **Do:** render `WorldMap` from the start (world view, slow rotation) with the gate as an overlay; on enter, `flyTo` the user's location instead of re-initializing the map.
 - **Done when:** gate → live is one continuous camera move with no map reload, and polling/presence still start only after join.
+- **Done:** map mounts on first render at world view; idle spin via chained `easeTo` (~120 s per turn, skipped under reduced motion because Mapbox makes non-essential eases instant, which would loop); `flyTo` zoom 4 over 2.8 s on the first `me` fix (not `essential`, so reduced motion jumps). `myLocation` is now set only after a successful join, so a failed join leaves no pin and no camera move. Gate is an `absolute` overlay with an `ink/55` scrim.
+- **Handed to P2-08:** country labels are busy behind the gate text (stronger center scrim, or hide labels while gated); the button still says "Locating…" during the join request (dev DB took 2.7 s cold), so it should become "Joining…"; fade the gate out instead of unmounting it instantly.
 
 ### P2-08 · Entry screen redesign
 - **Files:** `app/components/EntryGate.tsx`

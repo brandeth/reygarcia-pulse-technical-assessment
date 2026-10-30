@@ -55,9 +55,10 @@ export default function WorldMap({
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: "mapbox://styles/mapbox/dark-v11",
-        // Open centered on the user if we know where they are, else world view.
-        center: me ? [me.lng, me.lat] : [0, 20],
-        zoom: me ? 4 : 1.4,
+        // Mounted behind the entry gate, before we know where the user is:
+        // open on the whole globe; the fly-in below takes it from there.
+        center: [0, 20],
+        zoom: 1.4,
         attributionControl: true,
       });
       // Recolor dark-v11 to the app palette before its first frame.
@@ -78,9 +79,30 @@ export default function WorldMap({
       mapRef.current = null;
       setReady(false);
     };
-    // `me` is only read for the initial center; we don't want to re-init on change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Slowly spin the globe while nobody has entered yet (behind the gate).
+  // Each easeTo nudges it a few degrees; its moveend queues the next nudge.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || me) return;
+    // Under reduced motion Mapbox makes easeTo instant, so moveend would fire
+    // immediately and this would loop as fast as it can. Skip the spin.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const spin = () => {
+      const center = map.getCenter();
+      center.lng -= 3; // ~120 s per revolution
+      map.easeTo({ center, duration: 1000, easing: (t) => t });
+    };
+    map.on("moveend", spin);
+    spin();
+
+    return () => {
+      map.off("moveend", spin);
+      map.stop();
+    };
+  }, [ready, me]);
 
   // Show / move the user's own "you are here" pin.
   useEffect(() => {
@@ -103,6 +125,9 @@ export default function WorldMap({
         })
           .setLngLat([me.lng, me.lat])
           .addTo(map);
+        // First fix: fly down from the globe to the user. Not `essential`,
+        // so Mapbox jumps instead of flying under reduced motion.
+        map.flyTo({ center: [me.lng, me.lat], zoom: 4, duration: 2800 });
       } else {
         meMarkerRef.current.setLngLat([me.lng, me.lat]);
       }

@@ -336,18 +336,20 @@ export default function Home() {
   }, [sessionId, phase]);
 
   async function handleReady(lat: number, lng: number) {
-    setMyLocation({ lat, lng });
     myLocationRef.current = { lat, lng };
-    setSessionId(await join(lat, lng)); // throws on failure → EntryGate shows error
+    const id = await join(lat, lng); // throws on failure → EntryGate shows error
+    // Only after a successful join, and together: the gate closes, the map
+    // flies to us and our pin lands in the same render.
+    setMyLocation({ lat, lng });
+    setSessionId(id);
     setPhase("live");
-  }
-
-  if (phase === "gate") {
-    return <EntryGate onReady={handleReady} />;
   }
 
   const inChat = conn.kind === "connecting" || conn.kind === "connected";
 
+  // The map is mounted from the first render, so the gate sits on top of a
+  // live globe and entering is one camera move, not a fresh map load.
+  // Polling and presence still wait for phase === "live" (effects above).
   return (
     <main className="fixed inset-0 overflow-hidden">
       <WorldMap
@@ -357,7 +359,9 @@ export default function Home() {
         canConnect={conn.kind === "idle"}
       />
 
-      <Header online={peers.length} />
+      {phase === "gate" && <EntryGate onReady={handleReady} />}
+
+      {phase === "live" && <Header online={peers.length} />}
 
       {/* With the chat drawer open on wide screens, center over the map
           area that's still visible (the drawer is max-w-md = 28rem). */}
