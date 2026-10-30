@@ -59,12 +59,37 @@
     }
   }
 
-  /* Prompt cards rise from the bottom edge. */
+  /* Prompt cards (and the chat panel) rise from the bottom edge, and sink
+     back down as they close: faster out than in, so closing feels snappy. */
   --animate-card-in: card-in 0.3s var(--ease-out-soft);
   @keyframes card-in {
     from {
       opacity: 0;
       transform: translateY(16px);
+    }
+  }
+  --animate-card-out: card-out 0.2s ease-in forwards;
+  @keyframes card-out {
+    to {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  /* Exits under reduced motion: fade only, no movement. */
+  --animate-fade-out: fade-out 0.2s ease-out forwards;
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* A new chat message eases up into place. */
+  --animate-msg-in: msg-in 0.2s var(--ease-out-soft);
+  @keyframes msg-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
     }
   }
 

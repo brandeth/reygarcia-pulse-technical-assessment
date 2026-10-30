@@ -22,7 +22,10 @@ export default function CountdownRing({
         strokeLinecap="round"
         pathLength={100}
         strokeDasharray="100"
-        className="animate-countdown stroke-fg motion-reduce:animate-none"
+        // Kept under reduced motion: it's a slow, in-place progress
+        // indicator (how long is left), not movement. Stopping it showed a
+        // full ring right up until "No answer."
+        className="animate-countdown stroke-fg"
         style={{ animationDuration: `${ms}ms` }}
       />
     </svg>

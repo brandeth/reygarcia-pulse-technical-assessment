@@ -24,7 +24,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-14 | Chat "ended" state | 2a | M | 13 | [x] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [x] |
 | — | *Phase 4 feature: connection arcs, see `phase-4-tasks.md`* | P4 | — | 2a done | — |
-| P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [ ] |
+| P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [x] |
 | P2-17 | Accessibility pass | 2b | M | 2a done | [ ] |
 | P2-18 | Empty states + copy pass | 2b | S | 2a done | [ ] |
 | P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [ ] |
@@ -163,6 +163,9 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-16 · Motion pass + reduced motion
 - Panel/sheet transitions, button press states, camera easing; `prefers-reduced-motion` disables the looping pulse and big camera moves.
+- **Audit:** already fine: every enter animation has `motion-reduce:animate-none`; `Button` press scale off under RM; globe spin skipped; `flyTo`s aren't `essential`, so Mapbox jumps; dot / ripple / heartbeat animations stop via CSS media queries. Gaps: no exit animations (chat panel, connect + video cards, status pills vanished in one frame), messages popped in, countdown ring frozen under RM.
+- **Done:** `app/components/usePresence.ts` (`EXIT_MS` 200; `prevShow` / `leaving` state adjusted during render, timeout effect) → `{ mounted, leaving }`. New tokens `card-out` (0.2 s ease-in, sink + fade), `fade-out` (RM exit), `msg-in` (0.2 s, 6 px rise). `leaving` prop on `ChatPanel`, `ConnectionPrompt`, `StatusPill` (each `inert` while leaving; `animate-*-out motion-reduce:animate-fade-out`). `ChatPanel` keeps a `shown` snapshot of messages / connected / endedReason, frozen while leaving. `page.tsx` remembers `lastIncomingId` / `lastRequestingId` so leaving cards keep their key (and ring). Toasts exit with a fade under RM too. `CountdownRing` no longer stops under RM. `VideoPanel` has no exit (streams end with the call).
+- **Verified:** MutationObserver timestamps for decline (card-out → removed +211 ms), accept (card-out and chat card-in in the same frame), Back to map (chat leaving shows "Chat ended" content, `inert`, removed +220 ms), cancel request (pill toast-out, then gone); built CSS has the `motion-reduce:` rules inside `prefers-reduced-motion: reduce`. Not run with RM actually on (the browser pane can't emulate it); video card / pill exits not exercised live (need WebRTC), same code path.
 
 ### P2-17 · Accessibility pass
 - Focus rings, keyboard access for prompts / chat / video controls, contrast check on the tokens, labels on icon buttons.

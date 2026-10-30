@@ -16,6 +16,7 @@ export default function ConnectionPrompt({
   onDecline,
   countdownMs,
   className = "",
+  leaving = false,
 }: {
   kind: "connect" | "video";
   title: string;
@@ -27,16 +28,24 @@ export default function ConnectionPrompt({
   // How long until the request expires on the other side, if it does.
   countdownMs?: number;
   className?: string;
+  // Answered or withdrawn: playing its exit (usePresence). Inert, so a
+  // second tap can't hit a button that's on its way out.
+  leaving?: boolean;
 }) {
   return (
     <div
+      inert={leaving}
       className={`pointer-events-none absolute inset-x-0 bottom-[calc(1.5rem+var(--safe-bottom))] z-30 flex justify-center px-4 ${className}`}
     >
       <div
         role="alertdialog"
         aria-labelledby="prompt-title"
         aria-describedby={subtitle ? "prompt-text" : undefined}
-        className="pointer-events-auto flex w-full max-w-sm animate-card-in flex-col gap-4 rounded-panel border border-line bg-glass p-4 text-fg shadow-panel backdrop-blur-glass motion-reduce:animate-none"
+        className={`pointer-events-auto flex w-full max-w-sm flex-col gap-4 rounded-panel border border-line bg-glass p-4 text-fg shadow-panel backdrop-blur-glass ${
+          leaving
+            ? "animate-card-out motion-reduce:animate-fade-out"
+            : "animate-card-in motion-reduce:animate-none"
+        }`}
       >
         <div className="flex items-center gap-3">
           <span className="relative grid size-11 shrink-0 place-items-center">

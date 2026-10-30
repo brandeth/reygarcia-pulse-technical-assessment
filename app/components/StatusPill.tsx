@@ -9,6 +9,7 @@ export default function StatusPill({
   children,
   onCancel,
   countdownMs,
+  leaving = false,
 }: {
   children: ReactNode;
   onCancel?: () => void;
@@ -16,12 +17,17 @@ export default function StatusPill({
   // instead of an open-ended spinner. It starts on mount, so mount the pill
   // when the timer starts (and re-key it for a new timer).
   countdownMs?: number;
+  // The wait is over: playing its exit like a toast (usePresence).
+  leaving?: boolean;
 }) {
   return (
     <div
-      className={`pointer-events-auto flex animate-toast-in items-center gap-3 rounded-full border border-line bg-glass py-1.5 pl-4 text-sm text-fg shadow-panel backdrop-blur-glass motion-reduce:animate-none ${
-        onCancel ? "pr-1.5" : "pr-4"
-      }`}
+      inert={leaving}
+      className={`pointer-events-auto flex items-center gap-3 rounded-full border border-line bg-glass py-1.5 pl-4 text-sm text-fg shadow-panel backdrop-blur-glass ${
+        leaving
+          ? "animate-toast-out motion-reduce:animate-fade-out"
+          : "animate-toast-in motion-reduce:animate-none"
+      } ${onCancel ? "pr-1.5" : "pr-4"}`}
     >
       {countdownMs ? (
         <CountdownRing ms={countdownMs} />

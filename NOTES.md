@@ -219,6 +219,30 @@ it at runtime instead of swapping the provided map library.
   mirrored, like every camera app, and can be dragged to any corner,
   where it glides into place.
 
+- **Motion pass.** An audit showed reduced motion was already handled
+  almost everywhere (every entrance animation, button presses, the globe
+  spin, camera flights, the dots), but nothing ever animated *out*: the
+  chat panel, request cards and status pills appeared smoothly and then
+  vanished in a single frame. A small `usePresence` hook now keeps them
+  on screen for 200 ms after they close so they can sink and fade away
+  (a plain fade under reduced motion), marked `inert` so a second tap
+  can't hit a button that's leaving.
+  - The page clears the conversation the moment a chat closes, so the
+    leaving panel would have slid away empty and saying "Connecting…".
+    It now keeps showing its last content while it leaves.
+  - New chat messages ease up into place instead of popping in.
+  - The request countdown ring now keeps running under reduced motion:
+    it's a slow, in-place progress indicator, not movement, and stopping
+    it showed a full ring right up until "No answer."
+  - The video call still closes instantly: its streams end with the
+    call, so an exit animation would only show a black frame.
+  - *Verified* by timestamping elements in the page: declining a request
+    (card exit, removed 211 ms later), accepting (card exits as the chat
+    panel enters), "Back to map" after the other side left (panel still
+    reads "Chat ended" while leaving, inert, removed after 220 ms), and
+    cancelling a request (pill exits); the reduced-motion rules are in
+    the built CSS under `prefers-reduced-motion: reduce`.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

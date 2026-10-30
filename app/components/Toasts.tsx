@@ -83,9 +83,14 @@ export function Toaster({
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex max-w-sm items-center gap-2 rounded-full border bg-glass px-4 py-2 text-sm text-fg shadow-panel backdrop-blur-glass motion-reduce:animate-none ${
+          className={`flex max-w-sm items-center gap-2 rounded-full border bg-glass px-4 py-2 text-sm text-fg shadow-panel backdrop-blur-glass ${
             t.variant === "error" ? "border-danger/40" : "border-line"
-          } ${t.leaving ? "animate-toast-out" : "animate-toast-in"}`}
+          } ${
+            // Under reduced motion: no drop-in, and a plain fade out.
+            t.leaving
+              ? "animate-toast-out motion-reduce:animate-fade-out"
+              : "animate-toast-in motion-reduce:animate-none"
+          }`}
         >
           {t.variant === "error" && (
             <span aria-hidden className="size-2 shrink-0 rounded-full bg-danger" />
