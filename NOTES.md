@@ -292,3 +292,18 @@ shows a globe being used, not just dots sitting still.
     a request is pending; the pair appears for everyone after accept,
     disappears after `end` and after `/api/leave`; `peerId` never appears
     in the response.
+
+- **Arcs follow the globe.** Mapbox draws a two-point line straight in
+  Mercator, which on the globe bends off the real shortest route (Tokyo →
+  San Francisco would cross Asia and Europe instead of the Pacific).
+  `lib/arcs.ts` samples the great circle itself: both dots become vectors
+  from the Earth's center, and spherical interpolation walks between them
+  at constant speed. Longitudes are unwrapped (178° → 188°, not → -172°) so
+  an arc over the antimeridian doesn't become a line around the world. No
+  turf dependency for ~60 lines of math.
+  - Every arc gets 65 points, even dots 3 km apart, so the draw-in
+    animation takes the same time for every arc.
+  - *Verified* with a script: Tokyo → San Francisco peaks at 48.6° N over
+    the North Pacific, Manila → London passes over Central Asia, Fiji →
+    Samoa crosses the antimeridian without a jump; every route's length
+    equals the great-circle distance, with evenly spaced points.
