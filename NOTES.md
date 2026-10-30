@@ -73,6 +73,14 @@ it at runtime instead of swapping the provided map library.
   behavior. It defaults to `type="button"` (only Send submits the chat
   form), and icon-only buttons require an `aria-label` at the type level.
 
+- **Map restyled, still Mapbox.** Kept the provided `dark-v11` style and
+  recolored it at runtime (`lib/map-theme.ts`) instead of switching map
+  libraries: every layer is recolored by role (ink water, navy land,
+  quiet roads and borders, muted labels) so the dots are the brightest
+  thing on screen. The style's flat black fog became a night sky with a
+  navy atmosphere rim and stars, which makes the "living globe" visible
+  at world zoom. Applied on `style.load` so the stock gray never flashes.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
