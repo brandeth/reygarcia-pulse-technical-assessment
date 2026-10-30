@@ -11,10 +11,14 @@ import type { Map as MapboxMap, CustomLayerInterface } from "mapbox-gl";
 // That matrix is the flat (Mercator) camera, which matches what's on screen
 // once the globe has finished flattening out at zoom 6. Below that the
 // flat arc layers in lib/arc-layer.ts take over; the two cross-fade over
-// FADE_ZOOMS.
+// FADE_ZOOMS (zoom 6–7).
 
 export const FLAT_UNTIL = 6;
-export const FADE_ZOOMS = 0.5;
+// A whole zoom level on purpose: Mapbox evaluates the flat layers' opacity
+// (zoom + per-arc data) at integer zooms and blends in between, so a
+// shorter fade (6 → 6.5) really ran 6 → 7 and left the flat line showing
+// under the raised one while the map was tilted.
+export const FADE_ZOOMS = 1;
 
 // Arcs stand straight up over the line between the two dots, and rise as
 // the map tilts: flat seen from directly above, full height from
@@ -256,9 +260,12 @@ export function createArc3DLayer(id: string): Arc3DLayer {
       );
       // Heights are stored at full size (relative to a ground-level
       // origin), so scaling z here raises and lowers every arc as the map
-      // tilts, without rebuilding anything.
+      // tilts, without rebuilding anything. Also scaled by the zoom fade
+      // (cubed, so it mostly rises once the flat line is nearly gone):
+      // while the flat line is still fading out, the raised one lies on
+      // top of it instead of floating above it as a second line.
       const t = clamp01(map.getPitch() / FULL_LIFT_PITCH);
-      context.uniform1f(uniforms.u_lift, t * t * (3 - 2 * t));
+      context.uniform1f(uniforms.u_lift, t * t * (3 - 2 * t) * fade ** 3);
       // Arcs are light, not solid: they shouldn't hide each other or be
       // hidden by depth, and Mapbox restores its own GL state afterwards.
       context.disable(context.DEPTH_TEST);
