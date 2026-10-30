@@ -15,7 +15,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [x] |
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [x] |
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [x] |
-| P2-08 | Entry screen redesign | 2a | M | 07 | [ ] |
+| P2-08 | Entry screen redesign | 2a | M | 07 | [x] |
 | P2-09 | Dot redesign | 2a | M | 03 | [ ] |
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [ ] |
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [ ] |
@@ -107,6 +107,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/EntryGate.tsx`
 - **Do:** wordmark + tagline over the globe; three trust points (no account · fuzzed 1–3 km · nothing stored); designed locating / error states, including how to re-enable denied location.
 - **Done when:** all states (idle, locating, denied, unsupported, server error) look intentional.
+- **Done:** map labels hidden behind the gate (`hideLabels` / `showLabels` in `lib/map-theme.ts`, each layer's own `text-opacity` restored, fading in during the second half of the fly-in); radial scrim; Space Grotesk hero; amber `Button size="lg"` with spinner; states idle / "Finding you…" / "Joining…" / error, with an error card per cause (denied → how to re-enable, unavailable, unsupported, server) and "Try again"; three icon trust points (row on desktop, centered stack on phone); gate fades out over 0.4 s (`animate-gate-out`, opacity only) while the camera flies. Unsupported-browser state not exercised live.
 
 ### P2-09 · Dot redesign
 - **Files:** `app/globals.css`, `app/components/WorldMap.tsx`

@@ -28,6 +28,8 @@ const REQUEST_TIMEOUT_MS = 30_000;
 
 export default function Home() {
   const [phase, setPhase] = useState<"gate" | "live">("gate");
+  // The gate outlives the "gate" phase by its fade-out (gate-out, 0.4 s).
+  const [gateMounted, setGateMounted] = useState(true);
   const [sessionId, setSessionId] = useState("");
   const [peers, setPeers] = useState<PeerDot[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -343,6 +345,7 @@ export default function Home() {
     setMyLocation({ lat, lng });
     setSessionId(id);
     setPhase("live");
+    setTimeout(() => setGateMounted(false), 400);
   }
 
   const inChat = conn.kind === "connecting" || conn.kind === "connected";
@@ -359,7 +362,9 @@ export default function Home() {
         canConnect={conn.kind === "idle"}
       />
 
-      {phase === "gate" && <EntryGate onReady={handleReady} />}
+      {gateMounted && (
+        <EntryGate onReady={handleReady} leaving={phase === "live"} />
+      )}
 
       {phase === "live" && <Header online={peers.length} />}
 

@@ -1,4 +1,4 @@
-import type { Map as MapboxMap } from "mapbox-gl";
+import type { Map as MapboxMap, SymbolPaint } from "mapbox-gl";
 
 // "Night signal" colors for Mapbox's dark-v11 style. They extend the UI tokens
 // in app/globals.css (water = --color-ink, big labels = --color-muted), so keep
@@ -48,6 +48,38 @@ export function applyNightSignal(map: MapboxMap) {
     "horizon-blend": 0.08,
     "star-intensity": 0.35,
   });
+}
+
+// Behind the entry gate the globe should read as a shape: its labels compete
+// with the gate's text. Hide them, remembering each layer's own opacity (some
+// fade by zoom), and bring them back as the camera flies down to the user.
+type TextOpacity = NonNullable<SymbolPaint>["text-opacity"];
+const savedLabelOpacity = new WeakMap<MapboxMap, Map<string, TextOpacity>>();
+
+export function hideLabels(map: MapboxMap) {
+  const saved = new Map<string, TextOpacity>();
+  for (const { id, type } of map.getStyle()?.layers ?? []) {
+    if (type !== "symbol") continue;
+    saved.set(id, map.getPaintProperty(id, "text-opacity") as TextOpacity);
+    map.setPaintProperty(id, "text-opacity-transition", { duration: 0 });
+    map.setPaintProperty(id, "text-opacity", 0);
+  }
+  savedLabelOpacity.set(map, saved);
+}
+
+export function showLabels(map: MapboxMap) {
+  const saved = savedLabelOpacity.get(map);
+  if (!saved) return;
+  for (const [id, opacity] of saved) {
+    // Fade in during the second half of the fly-in, as places come into view.
+    map.setPaintProperty(id, "text-opacity-transition", {
+      duration: 1200,
+      delay: 1200,
+    });
+    // `undefined` (layer had no explicit value) restores the default.
+    map.setPaintProperty(id, "text-opacity", opacity);
+  }
+  savedLabelOpacity.delete(map);
 }
 
 function fillColor(id: string) {

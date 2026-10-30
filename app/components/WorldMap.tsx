@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { PeerDot } from "@/lib/types";
-import { applyNightSignal } from "@/lib/map-theme";
+import { applyNightSignal, hideLabels, showLabels } from "@/lib/map-theme";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
@@ -61,8 +61,12 @@ export default function WorldMap({
         zoom: 1.4,
         attributionControl: true,
       });
-      // Recolor dark-v11 to the app palette before its first frame.
-      map.on("style.load", () => applyNightSignal(map));
+      // Recolor dark-v11 to the app palette before its first frame, and start
+      // label-free: the map opens behind the entry gate.
+      map.on("style.load", () => {
+        applyNightSignal(map);
+        hideLabels(map);
+      });
       map.on("load", () => {
         if (!cancelled) setReady(true);
       });
@@ -128,6 +132,7 @@ export default function WorldMap({
         // First fix: fly down from the globe to the user. Not `essential`,
         // so Mapbox jumps instead of flying under reduced motion.
         map.flyTo({ center: [me.lng, me.lat], zoom: 4, duration: 2800 });
+        showLabels(map);
       } else {
         meMarkerRef.current.setLngLat([me.lng, me.lat]);
       }
