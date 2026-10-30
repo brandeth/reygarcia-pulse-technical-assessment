@@ -199,6 +199,16 @@ it at runtime instead of swapping the provided map library.
   Android shrinks the layout when the keyboard opens, and the input is
   16px so iOS doesn't zoom into it.
 
+- **When the other person leaves.** Their leaving wiped the conversation
+  instantly (`teardown()` cleared the messages and closed the panel), so
+  a goodbye you were still reading vanished mid-sentence. Now the
+  connection still closes at once (you're free on the map again right
+  away) but the conversation stays on screen, marked "Chat ended" with a
+  line saying what happened, until you tap "Back to map". Still memory
+  only: dismissing it clears it for good. Ending it yourself closes it
+  immediately, as before, and a new request or tapping someone replaces
+  it.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
