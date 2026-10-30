@@ -22,7 +22,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [x] |
 | P2-13 | Chat panel layout | 2a | L | 02 | [x] |
 | P2-14 | Chat "ended" state | 2a | M | 13 | [x] |
-| P2-15 | Video panel redesign | 2a | L | 13 | [ ] |
+| P2-15 | Video panel redesign | 2a | L | 13 | [x] |
 | — | *Phase 4 feature, built in the new style* | P4 | — | 2a done | — |
 | P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [ ] |
 | P2-17 | Accessibility pass | 2b | M | 2a done | [ ] |
@@ -156,6 +156,8 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/VideoPanel.tsx`, `app/page.tsx`, possibly `lib/webrtc.ts` (track toggles)
 - **Do:** mic / camera toggles (`track.enabled`); mirrored local preview; draggable picture-in-picture; chat reachable during the call; move the "waiting for video" pill off the chat input.
 - **Done when:** a full call (request → accept → toggle mic/cam → end → back to chat) works on desktop and mobile.
+- **Done:** `VideoPanel` rewritten: `md:right-[25rem]` so the chat panel stays usable beside the call; phones full screen + "Chat" button → minimized 96×144 remote tile (state inside VideoPanel, resets when the call ends). Mic / camera toggles flip `track.enabled` (no renegotiation), red `danger` + `aria-pressed` when off, "Camera off" placeholder. Local preview mirrored (`-scale-x-100`), draggable with pointer capture, snaps to the nearest corner with a FLIP transform glide (skipped under reduced motion). Glass control bar, `End video` danger. Tested with a canvas-generated stream standing in for the camera.
+- **Not done:** the other side isn't told when you mute / turn the camera off (they see black / hear silence); a cancel-vs-accept race on video requests (noted in P2-06) is still open; real-device camera/mic → P2-20.
 
 ## Phase 2b — Polish (after Phase 4)
 
