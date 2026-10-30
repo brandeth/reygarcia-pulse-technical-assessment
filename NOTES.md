@@ -209,6 +209,16 @@ it at runtime instead of swapping the provided map library.
   immediately, as before, and a new request or tapping someone replaces
   it.
 
+- **Video calls.** Video took over the whole screen in black, hiding the
+  chat, with only an "End video" button. Now, on desktop, the call fills
+  the map area and the chat stays beside it; on phones it's full screen
+  with a Chat button that shrinks it to a small floating tile above the
+  chat sheet. Mute and camera-off just disable the outgoing track (no
+  renegotiation; verified the other side receives black frames) and turn
+  their buttons red so you never forget you're muted. Your own preview is
+  mirrored, like every camera app, and can be dragged to any corner,
+  where it glides into place.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
