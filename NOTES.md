@@ -81,6 +81,19 @@ it at runtime instead of swapping the provided map library.
   navy atmosphere rim and stars, which makes the "living globe" visible
   at world zoom. Applied on `style.load` so the stock gray never flashes.
 
+- **Header with a live count.** Replaced the bottom-left "N online" pill
+  with a header: the wordmark plus a glass status pill. Its dot is a
+  still gray when you're alone and turns green with a double "lub-dub"
+  heartbeat (the brand motif behind "Pulse") when someone else is
+  online, so it tells you at a glance whether there's anyone to connect
+  with. Green, not the amber accent: I split brand from status, so amber
+  means "you can act on this" (dots, primary buttons) and green means
+  "live / connected", the convention people already read from chat apps.
+  Fixed the copy while there: the poll excludes the caller, so a user
+  alone on the map saw "0 online", as if nobody was there, themselves
+  included. It now reads "Just you right now" / "N strangers online".
+  The old pill also covered the Mapbox logo, which has to stay visible.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

@@ -177,11 +177,6 @@ export default function WorldMap({
           </p>
         </div>
       )}
-
-      {/* Online count */}
-      <div className="absolute bottom-4 left-4 rounded-full bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-300 backdrop-blur">
-        {peers.length} online
-      </div>
     </div>
   );
 }
