@@ -18,7 +18,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-08 | Entry screen redesign | 2a | M | 07 | [x] |
 | P2-09 | Dot redesign | 2a | M | 03 | [x] |
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [x] |
-| P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [ ] |
+| P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [x] |
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [ ] |
 | P2-13 | Chat panel layout | 2a | L | 02 | [ ] |
 | P2-14 | Chat "ended" state | 2a | M | 13 | [ ] |
@@ -129,6 +129,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/page.tsx`, `app/components/WorldMap.tsx`
 - **Do:** countdown ring tied to `REQUEST_TIMEOUT_MS` in the status pill; animated ring on the target dot; Cancel stays one tap away.
 - **Done when:** the user can see who they're calling and how long is left.
+- **Done:** `StatusPill` takes `countdownMs` → SVG ring (`pathLength=100`, `animate-countdown`, duration inline), keyed by `peerId` so each request gets a full ring; `WorldMap` takes `targetId` → `data-target` → scaled core + dashed amber orbit (`::before`, `dot-orbit`). Measured: ring progress = elapsed / 30 s; pill + target clear together at 30.1 s with "No answer."; also clear on Cancel, decline and accept.
 
 ### P2-12 · Incoming request card
 - **Files:** `app/components/ConnectionPrompt.tsx`, `app/page.tsx`
