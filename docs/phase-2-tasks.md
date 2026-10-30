@@ -27,7 +27,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [x] |
 | P2-17 | Accessibility pass | 2b | M | 2a done | [ ] |
 | P2-18 | Empty states + copy pass | 2b | S | 2a done | [ ] |
-| P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [ ] |
+| P2-19 | Branding: favicon, metadata, OG image | 2b | S | 01 | [x] |
 | P2-20 | Real-device QA | 2b | M | 16–18 | [ ] |
 | P2-21 | NOTES.md Phase 2 section | 2b | S | all | [ ] |
 | P2-22 | *Optional:* light/dark theme toggle | 2b | L | everything else | [ ] |
@@ -175,6 +175,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-19 · Branding
 - **Files:** `app/favicon.ico`, `app/layout.tsx` metadata, OG image.
+- **Done:** `lib/brand.ts` (tokens + `MARK_SVG`, `GLOBE_SVG`, `dataUri`); `app/icon.tsx` (64 × 64 PNG), `app/apple-icon.tsx` (180 × 180, mark on a full ink square since iOS shows transparent corners black), `app/opengraph-image.tsx` (1200 × 630 + `alt`), all `next/og` `ImageResponse` with the SVGs as data URIs. Title / description were already set in `layout.tsx`. Deleted `app/favicon.ico` and `public/{file,globe,next,vercel,window}.svg` (unreferenced). `next build`: all three `○` static. No `metadataBase`: Next falls back to `VERCEL_PROJECT_PRODUCTION_URL` on Vercel (local build warns and uses localhost). Default `next/og` font (no Space Grotesk file to load at build).
 
 ### P2-20 · Real-device QA
 - iOS Safari (camera, `playsInline`, keyboard), Android Chrome, narrow widths, two-user run on the Vercel URL.

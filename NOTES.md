@@ -243,6 +243,21 @@ it at runtime instead of swapping the provided map library.
     cancelling a request (pill exits); the reduced-motion rules are in
     the built CSS under `prefers-reduced-motion: reduce`.
 
+- **Branding.** The tab still showed the default Next.js icon, and a
+  shared link had no preview. The brand mark is now the app's own dot (a
+  glowing amber light with its heartbeat ring on an ink tile), and the
+  link preview is a 1200 × 630 card: wordmark, tagline and the three
+  trust points beside a night globe with a live green arc. All three
+  images (tab icon, iPhone home-screen icon, preview card) are drawn
+  from one set of SVGs in `lib/brand.ts` with the design tokens, and
+  rendered to PNG at build time by Next's `next/og`, so there's no
+  design-tool export to keep in sync. Removed the starter favicon and
+  the unused starter SVGs in `public/`.
+  - *Verified:* the production build prerenders all three as static
+    images; the page `<head>` has the icon, apple-touch-icon, Open Graph
+    and Twitter tags with size and alt text. On Vercel, Next fills in
+    the image's absolute URL from the production domain.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
