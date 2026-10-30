@@ -34,13 +34,17 @@ export async function GET(request: NextRequest) {
     data: { lastSeen: new Date(now) },
   });
 
-  // 2) Reap stale presence rows and orphaned signals (independent deletes —
-  // no atomicity needed, and avoids transactions over a PgBouncer pooler).
+  // 2) Reap stale presence rows, orphaned signals and expired rate-limit
+  // windows (independent deletes — no atomicity needed, and avoids
+  // transactions over a PgBouncer pooler).
   await prisma.presence.deleteMany({
     where: { lastSeen: { lt: staleCutoff } },
   });
   await prisma.signal.deleteMany({
     where: { createdAt: { lt: signalCutoff } },
+  });
+  await prisma.rateLimit.deleteMany({
+    where: { expiresAt: { lt: new Date(now) } },
   });
 
   // 3) Online peers, excluding self.
