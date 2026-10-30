@@ -6,7 +6,7 @@ import WorldMap from "./components/WorldMap";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import VideoPanel from "./components/VideoPanel";
-import { join, leave, poll, sendSignal } from "@/lib/api";
+import { join, leave, poll, sendSignal, SessionExpiredError } from "@/lib/api";
 import { PeerSession, type DescType, type PeerControl } from "@/lib/webrtc";
 import { POLL_INTERVAL_MS } from "@/lib/presence";
 import { type PeerDot, type SignalMsg } from "@/lib/types";
@@ -24,7 +24,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 
 export default function Home() {
   const [phase, setPhase] = useState<"gate" | "live">("gate");
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId, setSessionId] = useState("");
   const [peers, setPeers] = useState<PeerDot[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -289,11 +289,18 @@ export default function Home() {
         // throws into the catch below and is retried on the next tick.
         if (!data.self && myLocationRef.current) {
           const { lat, lng } = myLocationRef.current;
-          await join(sessionId, lat, lng);
+          await join(lat, lng);
         }
         setPeers(data.peers);
         for (const s of data.signals) processSignalRef.current(s);
-      } catch {}
+      } catch (err) {
+        // Token rejected (e.g. SESSION_SECRET rotated) — retrying can't
+        // succeed, so stop polling and ask for a reload.
+        if (err instanceof SessionExpiredError) {
+          setNotice("Session expired, reload.");
+          return;
+        }
+      }
       if (active) timer = setTimeout(tick, POLL_INTERVAL_MS);
     };
     tick();
@@ -321,7 +328,7 @@ export default function Home() {
   async function handleReady(lat: number, lng: number) {
     setMyLocation({ lat, lng });
     myLocationRef.current = { lat, lng };
-    await join(sessionId, lat, lng); // throws on failure → EntryGate shows error
+    setSessionId(await join(lat, lng)); // throws on failure → EntryGate shows error
     setPhase("live");
   }
 

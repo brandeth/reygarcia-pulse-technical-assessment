@@ -2,11 +2,12 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { STALE_MS, SIGNAL_TTL_MS } from "@/lib/presence";
 import type { PollResponse } from "@/lib/types";
+import { verify } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET /api/poll?id= — the single endpoint that drives the live map.
+// GET /api/poll?id= (+ x-pulse-token header) — the single endpoint that drives the live map.
 // It (1) heartbeats the caller, (2) reaps stale presence + orphan signals,
 // (3) returns the filtered online peers, and (4) drains this user's mailbox.
 export async function GET(request: NextRequest) {
@@ -15,6 +16,11 @@ export async function GET(request: NextRequest) {
 
   if (!id) {
     return Response.json({ error: "missing id" }, { status: 400 });
+  }
+
+  // Token rides in a header so it never lands in URLs or access logs.
+  if (!verify(id, request.headers.get("x-pulse-token"))) {
+    return Response.json({ error: "invalid session" }, { status: 401 });
   }
 
   const now = Date.now();
