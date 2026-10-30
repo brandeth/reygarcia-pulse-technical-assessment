@@ -125,6 +125,19 @@
   }
 }
 
+/* Keep the Mapbox logo and attribution clear of the notch / home bar now
+   that the map runs edge to edge (viewportFit: "cover"). */
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  bottom: var(--safe-bottom);
+}
+.mapboxgl-ctrl-bottom-left {
+  left: var(--safe-left);
+}
+.mapboxgl-ctrl-bottom-right {
+  right: var(--safe-right);
+}
+
 /* Live user dots on the map.
    The outer .pulse-dot is the Mapbox marker element, and Mapbox owns its
    inline styles: it writes `transform` every frame to position it, and

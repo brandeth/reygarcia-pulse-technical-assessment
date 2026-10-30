@@ -50,7 +50,7 @@ export default function VideoPanel({
           className="absolute bottom-4 right-4 h-40 w-28 rounded-lg border border-zinc-700 bg-zinc-800 object-cover"
         />
       </div>
-      <div className="flex justify-center bg-zinc-950 p-4">
+      <div className="flex justify-center bg-zinc-950 p-4 pb-[calc(1rem+var(--safe-bottom))]">
         <button
           onClick={onEnd}
           className="rounded-full bg-red-500 px-8 py-3 font-semibold text-white hover:bg-red-400"

@@ -405,9 +405,9 @@ export default function Home() {
 
       {phase === "live" && <Header online={peers.length} />}
 
-      {/* With the chat drawer open on wide screens, center over the map
-          area that's still visible (the drawer is max-w-md = 28rem). */}
-      <Toaster toasts={toasts} className={inChat ? "md:right-[28rem]" : ""}>
+      {/* With the chat panel open on wide screens, center over the map
+          area that's still visible (panel w-96 + 1rem gap = 25rem). */}
+      <Toaster toasts={toasts} className={inChat ? "md:right-[25rem]" : ""}>
         {conn.kind === "requesting" && (
           // Mounts with the request, so the ring and REQUEST_TIMEOUT_MS start
           // together; keyed so a new request always gets a full ring.
@@ -463,8 +463,8 @@ export default function Home() {
           declineLabel="Decline"
           onAccept={acceptVideo}
           onDecline={declineVideo}
-          // Center over the map beside the chat drawer, like the toasts.
-          className="md:right-[28rem]"
+          // Center over the map beside the chat panel, like the toasts.
+          className="md:right-[25rem]"
         />
       )}
 
