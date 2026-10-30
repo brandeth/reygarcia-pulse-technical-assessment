@@ -217,26 +217,54 @@
   }
 }
 
-/* The user's own "you are here" pin — small, sized like the dots. */
+/* The user's own position: a steady white light with a ring, not amber
+   (amber means "tap this", and you can't tap yourself) and no heartbeat (the
+   pulse means "someone you can reach"). Same split as .pulse-dot: Mapbox owns
+   the outer element (so no `position` here; .mapboxgl-marker sets it), the
+   visuals live on the inner core. */
 .pulse-me {
-  position: relative;
-  font-size: 18px;
-  line-height: 1;
+  z-index: 1; /* above peer dots where they overlap */
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   cursor: default;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.pulse-me-core {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-fg);
+  /* ink gap, thin white ring, soft halo */
+  box-shadow:
+    0 0 0 3px rgb(7 11 20 / 0.9),
+    0 0 0 4.5px rgb(232 236 244 / 0.55),
+    0 0 18px 4px rgb(232 236 244 / 0.3);
+  animation: dot-in 0.5s var(--ease-out-soft) backwards;
 }
 
 .pulse-me-label {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 9px);
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 1px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 0 5px;
+  padding: 1px 7px;
+  border: 1px solid var(--color-line);
   border-radius: 9999px;
+  background: var(--color-glass);
+  backdrop-filter: blur(8px);
+  color: var(--color-fg);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-me-core {
+    animation: none;
+  }
 }

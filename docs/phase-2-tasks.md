@@ -17,7 +17,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [x] |
 | P2-08 | Entry screen redesign | 2a | M | 07 | [x] |
 | P2-09 | Dot redesign | 2a | M | 03 | [x] |
-| P2-10 | "Me" marker redesign | 2a | S | 09 | [ ] |
+| P2-10 | "Me" marker redesign | 2a | S | 09 | [x] |
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [ ] |
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [ ] |
 | P2-13 | Chat panel layout | 2a | L | 02 | [ ] |
@@ -122,6 +122,8 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/WorldMap.tsx`, `app/globals.css`
 - **Do:** replace the 📍 emoji with a designed marker (distinct from peers, consistent across OSes).
 - **Done when:** it looks the same on Windows / macOS / iOS / Android.
+- **Done:** `.pulse-me` (outer, Mapbox-owned) + `.pulse-me-core`: white `fg` core, ink gap, thin white ring, soft halo; glass "You" label; no heartbeat; `z-index: 1` over peer dots; centered anchor (was the pin's tip); `role="img"` + `aria-label="Your location"` set before the Marker is created. Also fixed: Mapbox adds `role="img"` to marker elements without a role, which made peer dot `<button>`s read as images; they now set `role="button"`. Landing zoom raised from 4 to 11 (flight 2.8 → 3.5 s, label fade delay 1.2 → 1.8 s): at zoom 4 a stranger a few km away hid under "You" (user's report).
+- **Possible follow-up (not scheduled):** adaptive landing that frames you + the nearest few strangers, and a `maxZoom` cap (~12) so fuzzed dots never look like street addresses.
 
 ### P2-11 · Outgoing request: countdown + target ring
 - **Files:** `app/page.tsx`, `app/components/WorldMap.tsx`

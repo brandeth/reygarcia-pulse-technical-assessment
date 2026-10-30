@@ -71,10 +71,11 @@ export function showLabels(map: MapboxMap) {
   const saved = savedLabelOpacity.get(map);
   if (!saved) return;
   for (const [id, opacity] of saved) {
-    // Fade in during the second half of the fly-in, as places come into view.
+    // Fade in during the second half of the 3.5 s fly-in, as places come
+    // into view.
     map.setPaintProperty(id, "text-opacity-transition", {
       duration: 1200,
-      delay: 1200,
+      delay: 1800,
     });
     // `undefined` (layer had no explicit value) restores the default.
     map.setPaintProperty(id, "text-opacity", opacity);

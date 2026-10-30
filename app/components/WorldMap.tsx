@@ -99,7 +99,7 @@ export default function WorldMap({
     };
   }, [ready, me]);
 
-  // Show / move the user's own "you are here" pin.
+  // Show / move the user's own "you are here" marker.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !me) return;
@@ -109,20 +109,25 @@ export default function WorldMap({
       const mapboxgl = (await import("mapbox-gl")).default;
       if (cancelled) return;
       if (!meMarkerRef.current) {
+        // Same structure as the peer dots: Mapbox owns the outer element,
+        // the visuals live on the inner core. No emoji, so it looks the
+        // same on every OS.
         const el = document.createElement("div");
         el.className = "pulse-me";
-        el.title = "You are here";
-        el.innerHTML = `<span class="pulse-me-label">Me</span>📍`;
-        // anchor "bottom" → the pin's tip sits on the exact coordinate.
-        meMarkerRef.current = new mapboxgl.Marker({
-          element: el,
-          anchor: "bottom",
-        })
+        // Set before creating the Marker: Mapbox only fills in its generic
+        // "Map marker" label when the element has none.
+        el.setAttribute("role", "img");
+        el.setAttribute("aria-label", "Your location");
+        el.innerHTML = `<span class="pulse-me-core"><span class="pulse-me-label">You</span></span>`;
+        // Centered on the exact coordinate, like the dots.
+        meMarkerRef.current = new mapboxgl.Marker({ element: el })
           .setLngLat([me.lng, me.lat])
           .addTo(map);
-        // First fix: fly down from the globe to the user. Not `essential`,
-        // so Mapbox jumps instead of flying under reduced motion.
-        map.flyTo({ center: [me.lng, me.lat], zoom: 4, duration: 2800 });
+        // First fix: fly down from the globe to the user, landing at city
+        // level (zoom 11) so strangers a few km away show up as separate
+        // dots instead of hiding under "You". Not `essential`, so Mapbox
+        // jumps instead of flying under reduced motion.
+        map.flyTo({ center: [me.lng, me.lat], zoom: 11, duration: 3500 });
         showLabels(map);
       } else {
         meMarkerRef.current.setLngLat([me.lng, me.lat]);
@@ -153,6 +158,9 @@ export default function WorldMap({
           const el = document.createElement("button");
           el.type = "button";
           el.className = "pulse-dot";
+          // Without an explicit role, Mapbox stamps role="img" on marker
+          // elements, and screen readers would announce an image.
+          el.setAttribute("role", "button");
           // Mapbox owns this element's inline transform/opacity, so all
           // visuals live on the inner core (see .pulse-dot in globals.css).
           const core = document.createElement("span");
