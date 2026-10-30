@@ -15,12 +15,33 @@
   --color-on-accent: #1a1204;
   --color-danger: #f0475b;
   --color-danger-hover: #f46a7a;
+  /* Status, not brand: green means "live / connected right now". Amber stays
+     the accent for things you can act on. */
+  --color-live: #4ade80;
 
   --radius-panel: 1.25rem;
   --blur-glass: 16px;
   --shadow-panel: 0 24px 60px -12px rgb(0 0 0 / 0.6);
   --shadow-glow: 0 0 20px rgb(255 181 71 / 0.45);
+  --shadow-live: 0 0 10px rgb(74 222 128 / 0.6);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Double-beat "lub-dub" for live indicators (animate-heartbeat). */
+  --animate-heartbeat: heartbeat 1.6s ease-out infinite;
+  @keyframes heartbeat {
+    0%,
+    28%,
+    70%,
+    100% {
+      transform: scale(1);
+    }
+    14% {
+      transform: scale(1.35);
+    }
+    42% {
+      transform: scale(1.2);
+    }
+  }
 }
 
 /* `inline` because these point at variables next/font sets on <html>. */

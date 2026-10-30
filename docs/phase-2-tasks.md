@@ -11,7 +11,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-02 | Design tokens + base styles | 2a | S | 01 | [x] |
 | P2-02b | Shared `Button` component | 2a | S | 02 | [x] |
 | P2-03 | Restyle the Mapbox map | 2a | M | 02 | [x] |
-| P2-04 | Header: wordmark + online count | 2a | S | 02 | [ ] |
+| P2-04 | Header: wordmark + online count | 2a | S | 02 | [x] |
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [ ] |
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [ ] |
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [ ] |
@@ -50,10 +50,13 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
   | `fg` / `muted` | `#e8ecf4` / `#8a93a6` | body / secondary text |
   | `accent` | `#ffb547` warm amber | dots, primary actions, own bubbles |
   | `danger` | `#f0475b` rose red | end chat/call, errors |
+  | `live` | `#4ade80` mint green | status only: "live / connected right now" (header dot, chat "Connected", call status) |
   | Display font | Space Grotesk | wordmark, headings |
   | Body font | Geist | everything else |
 
   Amber over coral so "connect" and "end" never look alike.
+
+  **Color rule:** amber = something you can act on + brand (dots, primary buttons, own bubbles); green = live/connected status, never tappable; rose = ending or error. Each color keeps one meaning.
 
 ### P2-02 · Design tokens + base styles
 - **Files:** `app/globals.css`, `app/layout.tsx`
@@ -75,8 +78,9 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-04 · Header: wordmark + online count
 - **Files:** `app/page.tsx`, `app/components/WorldMap.tsx` (move the counter out), new `app/components/Header.tsx`
-- **Do:** wordmark + live "N online" with a small heartbeat indicator; replaces the bottom-left pill. If this is the first task to pad with `--safe-top`, turn on `viewportFit: "cover"` in `layout.tsx` here.
+- **Do:** wordmark + live "N online" with a small heartbeat indicator; replaces the bottom-left pill.
 - **Done when:** the header is visible on the map screen at desktop and mobile widths and doesn't block map gestures.
+- **Done:** `Header.tsx` (Space Grotesk wordmark + glass count pill whose dot is green `live` + `animate-heartbeat` when others are online, and a still gray `muted` dot when you're alone; green, not amber, because it's a status). Copy fixed: the poll excludes self, so "0 online" now reads "Just you right now" / "1 stranger online". The old pill also overlapped the Mapbox logo. Pads with `--safe-*`, but `viewportFit: "cover"` stays off until P2-13 pads the chat input (turning it on now would put the input under the iPhone home bar).
 
 ### P2-05 · Toast queue (fixes Task 8)
 - **Files:** `app/page.tsx`, new `app/components/Toasts.tsx` (hook + view)
@@ -122,7 +126,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 
 ### P2-13 · Chat panel layout
 - **Files:** `app/components/ChatPanel.tsx`
-- **Do:** turn on `viewportFit: "cover"` (if P2-04 hasn't) and pad with `--safe-bottom`; floating glass panel on desktop, bottom sheet on mobile; stranger avatar in their dot color; grouped bubbles; inline system lines ("Connected · peer-to-peer"); Video / End as icon buttons.
+- **Do:** turn on `viewportFit: "cover"` in `layout.tsx` and pad with `--safe-bottom` (also check VideoPanel's bottom bar and any other bottom-anchored UI); floating glass panel on desktop, bottom sheet on mobile; stranger avatar in their dot color; grouped bubbles; inline system lines ("Connected · peer-to-peer"); "Connected" status uses the green `live` token; Video / End as icon buttons.
 - **Done when:** the map stays partly visible on desktop, and on mobile the input isn't covered by the on-screen keyboard.
 
 ### P2-14 · Chat "ended" state

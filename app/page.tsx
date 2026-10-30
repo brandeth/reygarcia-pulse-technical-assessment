@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import EntryGate from "./components/EntryGate";
 import WorldMap from "./components/WorldMap";
+import Header from "./components/Header";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import VideoPanel from "./components/VideoPanel";
@@ -347,6 +348,8 @@ export default function Home() {
         onPeerClick={requestConnection}
         canConnect={conn.kind === "idle"}
       />
+
+      <Header online={peers.length} />
 
       {notice && (
         <div className="absolute left-1/2 top-20 z-30 -translate-x-1/2 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
