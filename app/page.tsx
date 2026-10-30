@@ -144,6 +144,16 @@ export default function Home() {
     }
   }
 
+  // A tap on someone's dot. Taps that can't connect used to do nothing
+  // (or, on a busy dot, send a request that was auto-declined), so say why.
+  function handlePeerClick(peerId: string, busy: boolean) {
+    const kind = connRef.current.kind;
+    if (kind === "requesting") return toast("You're already waiting for an answer.");
+    if (kind !== "idle") return toast("Finish your current chat first.");
+    if (busy) return toast("They're in another chat right now.");
+    requestConnection(peerId);
+  }
+
   function requestConnection(peerId: string) {
     if (connRef.current.kind !== "idle") return;
     setConn({ kind: "requesting", peerId });
@@ -358,8 +368,7 @@ export default function Home() {
       <WorldMap
         peers={peers}
         me={myLocation}
-        onPeerClick={requestConnection}
-        canConnect={conn.kind === "idle"}
+        onPeerClick={handlePeerClick}
       />
 
       {gateMounted && (

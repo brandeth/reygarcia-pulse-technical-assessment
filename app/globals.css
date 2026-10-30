@@ -108,32 +108,113 @@
 }
 
 /* Live user dots on the map.
-   The outer .pulse-dot is the Mapbox marker element: Mapbox positions it with
-   an inline `transform`, so it must carry no transform/transition of its own
-   (a transition there makes dots trail behind the map while panning). */
+   The outer .pulse-dot is the Mapbox marker element, and Mapbox owns its
+   inline styles: it writes `transform` every frame to position it, and
+   `opacity` / `pointer-events` on every camera move (to fade dots behind the
+   globe). So it carries no transform, transition or opacity of its own; all
+   visuals and state live on the inner .pulse-dot-core, keyed off data
+   attributes on the outer element. */
 .pulse-dot {
-  width: 18px;
-  height: 18px;
+  display: grid;
+  place-items: center;
+  width: 28px; /* tap target; the visible dot is smaller */
+  height: 28px;
   padding: 0;
   border: 0;
+  border-radius: 9999px;
   background: transparent;
   cursor: pointer;
 }
 
+/* Available: a warm light you can tap. */
 .pulse-dot-core {
+  position: relative;
   display: block;
-  width: 14px;
-  height: 14px;
-  margin: 2px;
+  width: 12px;
+  height: 12px;
   border-radius: 9999px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 rgba(255, 255, 255, 0.5);
-  animation: pulse-ring 2s ease-out infinite;
-  transition: transform 0.1s ease;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px 2px rgb(255 181 71 / 0.55);
+  /* `backwards`, not `both`: once in, the dot must let hover's transform win. */
+  animation: dot-in 0.4s var(--ease-out-soft) backwards;
+  transition:
+    transform 0.15s var(--ease-out-soft),
+    background-color 0.3s,
+    box-shadow 0.3s;
 }
 
-.pulse-dot:hover .pulse-dot-core {
-  transform: scale(1.3);
+/* Heartbeat ring on a pseudo-element, animating only transform + opacity
+   (GPU-composited) instead of repainting a box-shadow every frame. Each dot
+   gets its own --dot-delay so the map twinkles instead of beating in sync. */
+.pulse-dot-core::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--color-accent);
+  animation: dot-ring 2.4s ease-out infinite;
+  animation-delay: var(--dot-delay, 0s);
+}
+
+.pulse-dot:hover .pulse-dot-core,
+.pulse-dot:focus-visible .pulse-dot-core {
+  transform: scale(1.35);
+}
+
+/* Busy (in another chat): a hollow, quiet ring that can't be requested. */
+.pulse-dot[data-busy] {
+  cursor: not-allowed;
+}
+.pulse-dot[data-busy] .pulse-dot-core {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgb(138 147 166 / 0.75);
+  transform: none;
+}
+.pulse-dot[data-busy] .pulse-dot-core::after {
+  animation: none;
+  opacity: 0;
+}
+
+/* Leaving: shrink away before the marker is removed. !important because
+   Mapbox writes pointer-events inline on camera moves. */
+.pulse-dot[data-leaving] {
+  pointer-events: none !important;
+}
+.pulse-dot[data-leaving] .pulse-dot-core {
+  animation: dot-out 0.3s ease-in forwards;
+}
+
+@keyframes dot-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes dot-out {
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes dot-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot-core,
+  .pulse-dot-core::after {
+    animation: none;
+  }
 }
 
 /* The user's own "you are here" pin — small, sized like the dots. */
@@ -158,16 +239,4 @@
   padding: 0 5px;
   border-radius: 9999px;
   white-space: nowrap;
-}
-
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-  }
 }

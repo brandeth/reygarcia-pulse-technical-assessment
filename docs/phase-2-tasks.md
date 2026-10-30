@@ -16,7 +16,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-06 | Status pill + session-expired banner | 2a | S | 05 | [x] |
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [x] |
 | P2-08 | Entry screen redesign | 2a | M | 07 | [x] |
-| P2-09 | Dot redesign | 2a | M | 03 | [ ] |
+| P2-09 | Dot redesign | 2a | M | 03 | [x] |
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [ ] |
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [ ] |
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [ ] |
@@ -113,6 +113,10 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/globals.css`, `app/components/WorldMap.tsx`
 - **Do:** replace random `dotColor()` hues with state styling (available = accent glow, busy = hollow and dimmed + not-allowed cursor); heartbeat (double-beat) pulse; scale-in on join, fade-out on leave; `aria-label` instead of `title` only.
 - **Done when:** the state of every dot is readable at a glance, and dots don't pop in or out.
+- **Done:** amber dot with glow + GPU heartbeat ring (`::after`, transform/opacity) with a random `--dot-delay` per dot; busy = hollow muted ring, no pulse, `not-allowed`, `aria-disabled`; `dot-in` / `dot-out` (300 ms, then `marker.remove()`); `aria-label` per state; 28 px tap target. All state is `data-busy` / `data-leaving` on the marker element, styled on the inner core.
+- **Bug fixed (user report):** busy dots flashed back to "available" on pan/zoom for ~1 s. Mapbox's `Marker._evaluateOpacity()` rewrites the marker element's inline `opacity` on every camera move (to fade dots behind the globe), overwriting our `style.opacity = 0.35` until the next poll.
+- **Taps now explain themselves:** busy dot → "They're in another chat right now." (no request sent); while requesting → "You're already waiting for an answer."; while chatting → "Finish your current chat first." `canConnect` prop removed; `onPeerClick(id, busy)`.
+- **Changed for P2-13:** dots no longer have per-user colors, so "avatar in their dot color" no longer applies.
 
 ### P2-10 · "Me" marker redesign
 - **Files:** `app/components/WorldMap.tsx`, `app/globals.css`
