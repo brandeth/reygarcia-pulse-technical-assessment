@@ -23,7 +23,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-13 | Chat panel layout | 2a | L | 02 | [x] |
 | P2-14 | Chat "ended" state | 2a | M | 13 | [x] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [x] |
-| — | *Phase 4 feature, built in the new style* | P4 | — | 2a done | — |
+| — | *Phase 4 feature: connection arcs, see `phase-4-tasks.md`* | P4 | — | 2a done | — |
 | P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [ ] |
 | P2-17 | Accessibility pass | 2b | M | 2a done | [ ] |
 | P2-18 | Empty states + copy pass | 2b | S | 2a done | [ ] |
