@@ -179,6 +179,9 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
   let frame: number | null = null;
   // Lines need new data this frame (an arc was added, removed or moving).
   let linesDirty = false;
+  // Something animated last frame: this frame must push the settled state
+  // (a finished draw-in or fade-in), or the map keeps its 99% frame.
+  let wasAnimating = false;
   // Sparks were drawn last frame, so they need clearing when they stop.
   let sparksShown = false;
 
@@ -242,7 +245,7 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
       }
     }
 
-    if (animating || linesDirty) {
+    if (animating || wasAnimating || linesDirty) {
       arcSource?.setData({
         type: "FeatureCollection",
         features: lines.map((l) => {
@@ -253,6 +256,7 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
       arc3d.setLines(lines);
       linesDirty = false;
     }
+    wasAnimating = animating;
     if (heads.length > 0 || sparksShown) {
       sparkSource?.setData({ type: "FeatureCollection", features: heads });
       arc3d.setSparks(sparks);
@@ -262,7 +266,7 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
     // Keep going while anything moves; held arcs keep their sparks moving.
     const sparking =
       !reducedMotion && [...arcs.values()].some((a) => a.leaving === null);
-    if (animating || sparking || sparksShown) start();
+    if (animating || wasAnimating || sparking || sparksShown) start();
   }
 
   function start() {
