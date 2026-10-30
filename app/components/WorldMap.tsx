@@ -5,6 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { PeerDot } from "@/lib/types";
 import { applyNightSignal, hideLabels, showLabels } from "@/lib/map-theme";
+import { createArcLayer, type ArcInput, type ArcLayer } from "@/lib/arc-layer";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
@@ -15,6 +16,8 @@ export default function WorldMap({
   me,
   onPeerClick,
   targetId = null,
+  pairs = null,
+  selfId = null,
 }: {
   peers: PeerDot[];
   me: { lat: number; lng: number } | null;
@@ -22,11 +25,18 @@ export default function WorldMap({
   onPeerClick: (id: string, busy: boolean) => void;
   // The peer we've asked to connect with, while we wait for an answer.
   targetId?: string | null;
+  // Live chats from the poll (null until the first poll), drawn as arcs.
+  pairs?: [string, string][] | null;
+  // Our own session id, so our own chat's arc can start at "You".
+  selfId?: string | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
   const meMarkerRef = useRef<Marker | null>(null);
+  const arcLayerRef = useRef<ArcLayer | null>(null);
+  // Whether the arcs have had their first set of chats since entering.
+  const arcsSeededRef = useRef(false);
   // The request whose person we've already brought into view (see below).
   const framedTargetRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -227,6 +237,43 @@ export default function WorldMap({
       cancelled = true;
     };
   }, [peers, ready, targetId]);
+
+  // The arc layers live as long as the map. Declared before the effect
+  // below, so they exist by the time it first runs.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const layer = createArcLayer(map);
+    arcLayerRef.current = layer;
+    return () => {
+      layer.destroy();
+      arcLayerRef.current = null;
+    };
+  }, [ready]);
+
+  // Turn the poll's pairs of ids into arcs between dots. Strangers' ends are
+  // their (fuzzed) dots; our own end is the "You" marker.
+  useEffect(() => {
+    const layer = arcLayerRef.current;
+    if (!layer || pairs === null) return;
+    const positions = new Map<string, { lat: number; lng: number }>(
+      peers.map((p) => [p.id, p]),
+    );
+    if (me && selfId) positions.set(selfId, me);
+
+    const arcs: ArcInput[] = [];
+    for (const [idA, idB] of pairs) {
+      const a = positions.get(idA);
+      const b = positions.get(idB);
+      // A dot we don't know yet; the next poll brings it.
+      if (!a || !b) continue;
+      const mine = idA === selfId || idB === selfId;
+      arcs.push({ key: `${idA}|${idB}`, a, b, mine });
+    }
+    // Chats already going when we entered fade in; later ones draw in.
+    layer.setArcs(arcs, { seed: !arcsSeededRef.current });
+    arcsSeededRef.current = true;
+  }, [pairs, peers, me, selfId, ready]);
 
   return (
     <div className="absolute inset-0">

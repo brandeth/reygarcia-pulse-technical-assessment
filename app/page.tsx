@@ -35,6 +35,8 @@ export default function Home() {
   const [gateMounted, setGateMounted] = useState(true);
   const [sessionId, setSessionId] = useState("");
   const [peers, setPeers] = useState<PeerDot[]>([]);
+  // Live chats on the map, drawn as arcs. null until the first poll.
+  const [pairs, setPairs] = useState<[string, string][] | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [expired, setExpired] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -347,6 +349,7 @@ export default function Home() {
           await join(lat, lng);
         }
         setPeers(data.peers);
+        setPairs(data.pairs);
         for (const s of data.signals) processSignalRef.current(s);
       } catch (err) {
         // Token rejected (e.g. SESSION_SECRET rotated) — retrying can't
@@ -431,6 +434,8 @@ export default function Home() {
             ? conn.peerId
             : null
         }
+        pairs={pairs}
+        selfId={sessionId || null}
       />
 
       {gateMounted && (

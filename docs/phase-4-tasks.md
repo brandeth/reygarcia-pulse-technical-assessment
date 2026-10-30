@@ -27,7 +27,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 |----|------|------|-----------|--------|
 | P4-01 | Poll returns connected pairs | S | — | [x] |
 | P4-02 | Great-circle arc geometry | S | — | [x] |
-| P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [ ] |
+| P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [x] |
 | P4-04 | The connect moment: burst at both ends | M | 03 | [ ] |
 | P4-05 | Header: "N online · M chatting" | S | 01 | [ ] |
 | P4-06 | Multi-window test + NOTES Phase 4 section | M | 01–05 | [ ] |
@@ -59,6 +59,8 @@ When two people connect anywhere, a light arc draws between their dots across th
   - Your own arc gets a feature property → brighter.
 - **Watch for:** `paint` properties like `line-trim-offset` apply to the whole layer, not per arc, so the draw-in grows each feature's coordinates instead. Cap the number of drawn arcs (e.g. 100) so a busy map stays smooth.
 - **Done when:** connecting two windows draws the arc in, it holds while they chat, ending fades it out, and panning, zooming and the globe view all look right.
+- **Done:** `lib/arc-layer.ts` (`createArcLayer(map)` → `setArcs(arcs, { seed })` / `destroy()`): sources `pulse-arcs` + `pulse-arc-sparks`, layers `pulse-arc-glow` / `pulse-arc-core` (line, blurred + thin) and `pulse-arc-spark-glow` / `pulse-arc-spark` (circle), inserted before the first symbol layer. Opacity and width are data-driven from feature properties `alpha` and `mine`. Draw-in 1.2 s (ease-out, interpolated tip), fade 0.6 s, spark trip 2.4 s + 2–6 s random pause, cap 100. `page.tsx` keeps `pairs` (null until the first poll) and passes `pairs` + `selfId`; `WorldMap` creates the layer once `ready` and resolves each pair's ends from `peers` / `me`. `destroy()` only cancels the frame, since the map (and its layers) may already be removed on unmount. `line-emissive-strength` not used: it only matters with 3D lights (Standard style), and dark-v11 has none.
+- **Verified** with scripted sessions in the browser pane (Manila pair, Tokyo ↔ SF on the globe, a stranger I accepted for my own arc, end / leave clearing). Draw-in seen part-drawn in one frame; exact timing not measurable with the screenshot tool. Not checked yet: phone width, reduced motion → P4-06.
 
 ### P4-04 · The connect moment
 - **Files:** `app/components/WorldMap.tsx`, `app/globals.css`
