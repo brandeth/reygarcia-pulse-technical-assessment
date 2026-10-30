@@ -321,3 +321,59 @@
     animation: none;
   }
 }
+
+/* Connect burst: when two people connect, a green ripple and a fainter
+   echo (the "lub-dub" again) spread from each end of their arc. Green
+   because it's live status, like the arc. A short-lived child of the
+   marker element (WorldMap adds it, then removes it after BURST_MS), so it
+   follows the dot and fades with it behind the globe. */
+.pulse-burst {
+  position: absolute;
+  inset: 0;
+  width: 12px;
+  height: 12px;
+  margin: auto;
+  border-radius: 9999px;
+  border: 2px solid var(--color-live);
+  box-shadow: 0 0 12px rgb(74 222 128 / 0.6);
+  pointer-events: none;
+  animation: burst 0.9s var(--ease-out-soft) forwards;
+}
+.pulse-burst::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 1.5px solid var(--color-live);
+  opacity: 0;
+  animation: burst-echo 0.9s var(--ease-out-soft) 0.2s forwards;
+}
+
+@keyframes burst {
+  from {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  to {
+    transform: scale(4.5);
+    opacity: 0;
+  }
+}
+@keyframes burst-echo {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* No bursts are created under reduced motion (lib/arc-layer.ts); this is a
+   backstop in case one ever is. */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-burst {
+    display: none;
+  }
+}

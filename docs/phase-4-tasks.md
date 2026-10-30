@@ -28,7 +28,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 | P4-01 | Poll returns connected pairs | S | — | [x] |
 | P4-02 | Great-circle arc geometry | S | — | [x] |
 | P4-03 | Arc layers on the map: draw in, hold, fade out | L | 01, 02 | [x] |
-| P4-04 | The connect moment: burst at both ends | M | 03 | [ ] |
+| P4-04 | The connect moment: burst at both ends | M | 03 | [x] |
 | P4-05 | Header: "N online · M chatting" | S | 01 | [ ] |
 | P4-06 | Multi-window test + NOTES Phase 4 section | M | 01–05 | [ ] |
 | P4-07 | *Optional:* consent-first video (blurred until you reveal) | S | — | [ ] |
@@ -66,6 +66,7 @@ When two people connect anywhere, a light arc draws between their dots across th
 - **Files:** `app/components/WorldMap.tsx`, `app/globals.css`
 - **Do:** when a pair first appears (not on the first poll after entering), each end gets a one-shot green ripple: a `data-burst` attribute on the marker element, styled on the inner core (Mapbox owns the outer element's inline styles; same lesson as P2-09), removed after the animation. Use `.pulse-me-core` when the end is you. Skipped under reduced motion.
 - **Done when:** a connection anywhere on screen is noticeable at a glance, without being loud.
+- **Done:** a `<span class="pulse-burst">` child instead of a `data-burst` attribute, so it can't clash with the core's `::before` (target orbit) / `::after` (heartbeat). `setArcs` now returns the keys that start drawing in (empty for seeded arcs and under reduced motion); `WorldMap` ripples the start dot at once and the far dot after `DRAW_MS`, removing each after `BURST_MS` (1.1 s). Own arc reordered to start at "You" (key unchanged). Ring: 12 px, `--color-live`, scale 0.6 → 4.5 over 0.9 s, plus a `::after` echo 0.2 s later. Verified with a MutationObserver: 0 ms / +1206 ms, removed after 1100 ms, own arc on `pulse-me` first, seeded → no ripple; frozen frame checked visually. Dev-only gotcha: a hot reload of `lib/arc-layer.ts` kept the old layer object (`drawing is not iterable`); a page reload fixes it, production is unaffected.
 
 ### P4-05 · Header: "N online · M chatting"
 - **Files:** `app/components/Header.tsx`, `app/page.tsx`

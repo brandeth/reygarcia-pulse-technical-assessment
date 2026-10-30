@@ -5,11 +5,17 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { PeerDot } from "@/lib/types";
 import { applyNightSignal, hideLabels, showLabels } from "@/lib/map-theme";
-import { createArcLayer, type ArcInput, type ArcLayer } from "@/lib/arc-layer";
+import {
+  createArcLayer,
+  DRAW_MS,
+  type ArcInput,
+  type ArcLayer,
+} from "@/lib/arc-layer";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
 const DOT_EXIT_MS = 300; // matches dot-out in globals.css
+const BURST_MS = 1100; // matches pulse-burst in globals.css, incl. its echo
 
 export default function WorldMap({
   peers,
@@ -262,17 +268,44 @@ export default function WorldMap({
     if (me && selfId) positions.set(selfId, me);
 
     const arcs: ArcInput[] = [];
-    for (const [idA, idB] of pairs) {
-      const a = positions.get(idA);
-      const b = positions.get(idB);
+    // Which dot each arc starts from and reaches, for the bursts below.
+    const ends = new Map<string, [string, string]>();
+    for (const pair of pairs) {
+      const key = pair.join("|");
+      // Our own arc reaches out from us to them.
+      const [from, to] = pair[1] === selfId ? [pair[1], pair[0]] : pair;
+      const a = positions.get(from);
+      const b = positions.get(to);
       // A dot we don't know yet; the next poll brings it.
       if (!a || !b) continue;
-      const mine = idA === selfId || idB === selfId;
-      arcs.push({ key: `${idA}|${idB}`, a, b, mine });
+      arcs.push({ key, a, b, mine: from === selfId });
+      ends.set(key, [from, to]);
     }
     // Chats already going when we entered fade in; later ones draw in.
-    layer.setArcs(arcs, { seed: !arcsSeededRef.current });
+    const drawing = layer.setArcs(arcs, { seed: !arcsSeededRef.current });
     arcsSeededRef.current = true;
+
+    // A new connection: a green ripple where the line leaves, and another
+    // on the far dot as the line reaches it.
+    for (const key of drawing) {
+      const [from, to] = ends.get(key)!;
+      burst(from);
+      setTimeout(() => burst(to), DRAW_MS);
+    }
+    function burst(id: string) {
+      const el =
+        id === selfId
+          ? meMarkerRef.current?.getElement()
+          : markersRef.current.get(id)?.getElement();
+      // Gone by now (left, or the map unmounted): nothing to mark.
+      if (!el) return;
+      // A child of the marker, not a style on it: Mapbox owns the marker
+      // element's inline styles (see .pulse-dot in globals.css).
+      const ring = document.createElement("span");
+      ring.className = "pulse-burst";
+      el.appendChild(ring);
+      setTimeout(() => ring.remove(), BURST_MS);
+    }
   }, [pairs, peers, me, selfId, ready]);
 
   return (

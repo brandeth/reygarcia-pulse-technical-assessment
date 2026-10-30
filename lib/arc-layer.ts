@@ -19,7 +19,7 @@ export type ArcInput = { key: string; a: LatLng; b: LatLng; mine: boolean };
 const LIVE = "#4ade80"; // --color-live in app/globals.css: a live status
 const SPARK = "#dcfce7"; // a lighter live green, so the spark reads as light
 
-const DRAW_MS = 1200; // draw-in, end to end
+export const DRAW_MS = 1200; // draw-in, end to end
 const FADE_MS = 600; // fade in (no draw-in) and fade out
 const SPARK_MS = 2400; // one spark trip along an arc
 const MAX_ARCS = 100; // keeps a very busy map smooth
@@ -41,7 +41,9 @@ type Arc = {
 export type ArcLayer = {
   // The full set of live chats. `seed` marks the first set after entering:
   // those chats were already going, so they fade in instead of drawing in.
-  setArcs: (arcs: ArcInput[], opts: { seed: boolean }) => void;
+  // Returns the keys of arcs that start drawing in now (none under reduced
+  // motion), so their dots can mark the moment.
+  setArcs: (arcs: ArcInput[], opts: { seed: boolean }) => string[];
   destroy: () => void;
 };
 
@@ -216,6 +218,7 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
     setArcs(inputs, { seed }) {
       const now = performance.now();
       const seen = new Set<string>();
+      const drawing: string[] = [];
 
       for (const { key, a, b, mine } of inputs.slice(0, MAX_ARCS)) {
         seen.add(key);
@@ -231,12 +234,14 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
         }
         // New, or the same two reconnected while it was fading out.
         const gap = 2000 + Math.random() * 4000;
+        const drawIn = !seed && !reducedMotion;
+        if (drawIn) drawing.push(key);
         arcs.set(key, {
           coords: arcCoordinates(a, b),
           ends,
           mine,
           born: now,
-          drawIn: !seed && !reducedMotion,
+          drawIn,
           leaving: null,
           sparkCycle: SPARK_MS + gap,
           // A freshly drawn arc sends its first spark right away.
@@ -253,6 +258,7 @@ export function createArcLayer(map: MapboxMap): ArcLayer {
       }
 
       if (linesDirty) start();
+      return drawing;
     },
 
     // Only stops the animation: on unmount the map is removed with its

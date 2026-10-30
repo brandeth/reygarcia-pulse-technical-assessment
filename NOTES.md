@@ -330,3 +330,18 @@ shows a globe being used, not just dots sitting still.
     cleared when chats ended or the other side left; no console errors.
     The 1.2 s draw-in was caught part-drawn in one frame, but the
     screenshot tool can't sample fast enough to time it.
+
+- **The connect moment.** When a chat starts, a green ripple with a
+  fainter echo (the "lub-dub" again) spreads from the dot the arc leaves,
+  and another from the far dot just as the line reaches it, so a
+  connection reads as something travelling from one person to the other.
+  Your own arc always leaves from "You". The ripple is a short-lived child
+  element of the marker (Mapbox owns the marker element's own inline
+  styles, same lesson as the dot fixes in Phase 1 and 2), so it follows
+  the dot and fades with it behind the globe. No ripples for chats that
+  were already running when you entered, and none under reduced motion.
+  - *Verified* by logging ripple elements with a MutationObserver while
+    scripted strangers connected: start dot at 0 ms, far dot at +1206 ms
+    (draw-in is 1200 ms), each removed after 1.1 s, one per end; my own
+    chat rippled on "You" first; entering while a chat was running gave
+    no ripple.
