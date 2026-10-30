@@ -46,6 +46,26 @@ token shows the hint instead. (An *invalid* but present token, e.g. the
 `.env.example` placeholder, still fails at Mapbox — validating it would
 need a network call, out of scope.)
 
+## Phase 2 — Make it good
+
+**Direction: "Night signal."** Pulse is pitched as a living globe of
+strangers, so the look is the Earth at night: an ink-navy map, dots that
+glow like city lights, and one warm amber accent. Amber rather than coral
+so "connect" and "end" (rose red) never look alike. Space Grotesk for the
+wordmark and headings, Geist for everything else. Kept Mapbox and restyle
+it at runtime instead of swapping the provided map library.
+
+- **Design tokens first.** Colors, glass surfaces, radii, shadows and
+  easing live in Tailwind's `@theme` (`globals.css`), so every screen
+  shares one palette instead of hardcoded `zinc-*`/`emerald-*` classes.
+  Replaced the unused light/dark boilerplate: the app is dark-only.
+- **Fonts never loaded visually.** `body { font-family: Arial }` overrode
+  the Geist font that `layout.tsx` downloads, so the whole app rendered in
+  Arial. Removed it and added Space Grotesk as the display face.
+- Small base polish: `color-scheme: dark` (native scrollbars/controls),
+  an amber `:focus-visible` ring for keyboard users, and a `theme-color`
+  meta so the mobile browser bar matches the app.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only
