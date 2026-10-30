@@ -59,6 +59,15 @@
     }
   }
 
+  /* Prompt cards rise from the bottom edge. */
+  --animate-card-in: card-in 0.3s var(--ease-out-soft);
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
   /* Countdown ring: empties a pathLength=100 stroke. The duration is set
      inline per use (e.g. the 30 s request timeout). */
   --animate-countdown: countdown 30s linear forwards;

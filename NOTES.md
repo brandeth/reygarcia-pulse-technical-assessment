@@ -179,6 +179,15 @@ it at runtime instead of swapping the provided map library.
   measured in sync with the real timer), and the dot you called gets a
   slowly orbiting dashed ring until they answer, decline, or it times out.
 
+- **Getting a request.** The incoming prompt was a modal that blacked out
+  the map, so you couldn't see who was asking, and in a background tab
+  the 30 s request usually expired unseen. It's now a card at the bottom
+  that leaves the map visible: the caller's dot gets the same orbiting
+  ring (and the camera flies to it if it's off-screen, since a request
+  can come from anywhere), the card shows the time left, and a hidden
+  tab flashes its title ("● Someone wants to connect") until it's seen.
+  The video request uses the same card, centered beside the chat.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

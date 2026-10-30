@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Button from "./Button";
+import CountdownRing from "./CountdownRing";
 
 // Persistent status ("Requesting connection…", "Requesting video…"): it stays
 // for as long as the state lasts. Toasts are the opposite: they report a
@@ -23,23 +24,7 @@ export default function StatusPill({
       }`}
     >
       {countdownMs ? (
-        <svg aria-hidden viewBox="0 0 20 20" className="size-4 shrink-0 -rotate-90">
-          <circle cx="10" cy="10" r="8" fill="none" strokeWidth="2.5" className="stroke-muted/30" />
-          {/* pathLength=100 makes the dash maths independent of the radius;
-              the animation runs the offset 0 → 100, emptying the ring. */}
-          <circle
-            cx="10"
-            cy="10"
-            r="8"
-            fill="none"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            pathLength={100}
-            strokeDasharray="100"
-            className="animate-countdown stroke-fg motion-reduce:animate-none"
-            style={{ animationDuration: `${countdownMs}ms` }}
-          />
-        </svg>
+        <CountdownRing ms={countdownMs} />
       ) : (
         // Spinner: we're waiting on the other person, with no deadline.
         <span
