@@ -112,12 +112,33 @@ it at runtime instead of swapping the provided map library.
   toasts report a moment. Video requests also had no way out: if the
   other person never answered, you waited forever. Added Cancel, which
   reuses the existing `video-end` control to close their prompt.
-  
+
 - **Expired session.** A rejected token stops polling, so the map goes
   dead. Instead of a toast saying "reload", a blocking card explains it
   and focuses a Reload button. Trade-off: if it fires mid-chat it covers
   a peer-to-peer chat that still works, but that only happens when the
   server secret rotates.
+
+- **The globe is the first thing you see.** The entry screen used to be a
+  black page, and entering mounted the map from scratch. Now the map is
+  mounted from the first frame, so the gate floats over a slowly spinning
+  night globe, and entering flies the camera down to you on the same map
+  instance: "drop onto the map", literally. The tiles also load while you
+  read, so entering feels instant. Visitors on the gate still make no API
+  calls and are invisible to others. Moved setting the user's location to
+  *after* a successful join, so a failed join no longer drops a pin.
+  Reduced motion: no spin, and the flight becomes a jump. Trade-off: every
+  page view now counts as a Mapbox map load, not just every join.
+
+- **Entry screen.** Over the spinning globe, the map's labels clashed with
+  the gate's text, so the globe now shows no labels behind the gate (each
+  layer's own opacity is saved and restored) and place names fade in as
+  the camera lands. The gate itself: a radial scrim, a large wordmark, the
+  amber Enter button, and three trust points that answer "is this safe?"
+  before you tap (no account, dot fuzzed 1–3 km, nothing stored). Errors
+  now say what to do, not just what failed (e.g. denied location explains
+  how to re-allow it), and the button says "Joining…" during the server
+  call instead of "Locating…". The gate dissolves as the camera flies in.
 
 ## Phase 3 — Security
 
