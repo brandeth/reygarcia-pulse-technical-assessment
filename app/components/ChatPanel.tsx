@@ -19,6 +19,8 @@ export default function ChatPanel({
   onSend,
   onStartVideo,
   onEnd,
+  endedReason,
+  onClose,
 }: {
   messages: ChatMessage[];
   connected: boolean;
@@ -26,13 +28,18 @@ export default function ChatPanel({
   onSend: (text: string) => void;
   onStartVideo: () => void;
   onEnd: () => void;
+  // Set when the other side ended the chat: the conversation stays readable,
+  // and the input is replaced by "Back to map" (onClose).
+  endedReason?: string;
+  onClose: () => void;
 }) {
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const ended = endedReason !== undefined;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, ended]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,7 +65,12 @@ export default function ChatPanel({
         <div className="min-w-0 flex-1">
           <p className="font-display leading-tight font-semibold">Stranger</p>
           <p className="flex items-center gap-1.5 text-xs text-muted">
-            {connected ? (
+            {ended ? (
+              <>
+                <span aria-hidden className="size-1.5 rounded-full bg-muted" />
+                Chat ended
+              </>
+            ) : connected ? (
               <>
                 {/* Green = live / connected (amber is for things you tap). */}
                 <span aria-hidden className="size-1.5 rounded-full bg-live" />
@@ -69,28 +81,34 @@ export default function ChatPanel({
             )}
           </p>
         </div>
-        <Button
-          variant="secondary"
-          size="icon"
-          aria-label="Start video call"
-          title="Start video call"
-          onClick={onStartVideo}
-          disabled={!connected || videoBusy}
-        >
-          <VideoIcon />
-        </Button>
-        <Button variant="danger" size="sm" onClick={onEnd}>
-          End
-        </Button>
+        {!ended && (
+          <>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Start video call"
+              title="Start video call"
+              onClick={onStartVideo}
+              disabled={!connected || videoBusy}
+            >
+              <VideoIcon />
+            </Button>
+            <Button variant="danger" size="sm" onClick={onEnd}>
+              End
+            </Button>
+          </>
+        )}
       </header>
 
       {/* role="log" announces new messages to screen readers. */}
       <div role="log" className="flex-1 overflow-y-auto px-4 py-3">
         <p className="flex items-center justify-center gap-1.5 pb-2 text-center text-xs text-muted">
           <LockIcon />
-          {connected
-            ? "Peer-to-peer: messages go straight to them, never stored"
-            : "Setting up a private connection…"}
+          {ended
+            ? "Nothing was stored: closing this clears it for good"
+            : connected
+              ? "Peer-to-peer: messages go straight to them, never stored"
+              : "Setting up a private connection…"}
         </p>
         {connected && messages.length === 0 && (
           <p className="mt-8 text-center text-sm text-muted">Say hello.</p>
@@ -120,32 +138,50 @@ export default function ChatPanel({
             </div>
           );
         })}
+        {ended && (
+          // Divider-style system line marking where the chat stopped.
+          <p className="mt-5 flex items-center gap-3 text-xs text-muted">
+            <span aria-hidden className="h-px flex-1 bg-line" />
+            {endedReason}
+            <span aria-hidden className="h-px flex-1 bg-line" />
+          </p>
+        )}
         <div ref={endRef} />
       </div>
 
-      <form
-        onSubmit={submit}
-        className="flex items-center gap-2 border-t border-line p-3 pb-[calc(0.75rem+var(--safe-bottom))]"
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={connected ? "Message" : "Connecting…"}
-          aria-label="Message"
-          disabled={!connected}
-          enterKeyHint="send"
-          // 16px on phones: iOS zooms the page into inputs smaller than that.
-          className="h-10 min-w-0 flex-1 rounded-full border border-line bg-ink/60 px-4 text-base text-fg outline-none placeholder:text-muted focus:border-accent/60 disabled:opacity-50 md:text-sm"
-        />
-        <Button
-          type="submit"
-          size="icon"
-          aria-label="Send message"
-          disabled={!connected || !draft.trim()}
+      {ended ? (
+        <div className="border-t border-line p-3 pb-[calc(0.75rem+var(--safe-bottom))]">
+          {/* The input just disappeared, so focus moves here rather than
+              being dropped on the page. */}
+          <Button className="w-full" autoFocus onClick={onClose}>
+            Back to map
+          </Button>
+        </div>
+      ) : (
+        <form
+          onSubmit={submit}
+          className="flex items-center gap-2 border-t border-line p-3 pb-[calc(0.75rem+var(--safe-bottom))]"
         >
-          <SendIcon />
-        </Button>
-      </form>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={connected ? "Message" : "Connecting…"}
+            aria-label="Message"
+            disabled={!connected}
+            enterKeyHint="send"
+            // 16px on phones: iOS zooms the page into inputs smaller than that.
+            className="h-10 min-w-0 flex-1 rounded-full border border-line bg-ink/60 px-4 text-base text-fg outline-none placeholder:text-muted focus:border-accent/60 disabled:opacity-50 md:text-sm"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            aria-label="Send message"
+            disabled={!connected || !draft.trim()}
+          >
+            <SendIcon />
+          </Button>
+        </form>
+      )}
     </section>
   );
 }

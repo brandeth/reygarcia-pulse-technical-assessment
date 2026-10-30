@@ -20,7 +20,10 @@ type Conn =
   | { kind: "requesting"; peerId: string }
   | { kind: "incoming"; peerId: string }
   | { kind: "connecting"; peerId: string }
-  | { kind: "connected"; peerId: string };
+  | { kind: "connected"; peerId: string }
+  // The other side left (or the link dropped). The connection is already
+  // closed; only the conversation stays on screen until it's dismissed.
+  | { kind: "ended"; peerId: string; reason: string };
 
 type VideoState = "none" | "requesting" | "incoming" | "active";
 
@@ -67,16 +70,37 @@ export default function Home() {
     setMessages((prev) => [...prev, { id: msgId.current++, mine, text }]);
   }
 
-  function teardown(message?: string) {
+  // Close the WebRTC side: peer connection, media, video state.
+  function closePeer() {
     if (requestTimer.current) clearTimeout(requestTimer.current);
     peerRef.current?.close();
     peerRef.current = null;
     setLocalStream(null);
     setRemoteStream(null);
     setVideo("none");
+  }
+
+  function teardown(message?: string) {
+    closePeer();
     setMessages([]);
     setConn({ kind: "idle" });
     if (message) toast(message);
+  }
+
+  // The other side ended the chat, or the connection dropped. Close the
+  // connection now, but keep the conversation on screen (in memory only,
+  // as before) so a last message isn't yanked away mid-read.
+  function endChat(reason: string) {
+    const c = connRef.current;
+    if (c.kind !== "connecting" && c.kind !== "connected") return;
+    closePeer();
+    setConn({ kind: "ended", peerId: c.peerId, reason });
+  }
+
+  // "Back to map" from the ended view.
+  function dismissEnded() {
+    setMessages([]);
+    setConn({ kind: "idle" });
   }
 
   function startPeer(peerId: string, initiator: boolean) {
@@ -91,8 +115,7 @@ export default function Home() {
         if (state === "failed") {
           // Tell the server too, or both of us stay busy + paired.
           void sendSignal(sessionId, peerId, "end");
-          teardown();
-          toast("Connection failed (network).", { variant: "error" });
+          endChat("The connection dropped.");
         }
       },
       onChannelOpen: () => {
@@ -102,7 +125,7 @@ export default function Home() {
         // Guard: our own teardown closes the channel too.
         if (peerRef.current === ps) {
           void sendSignal(sessionId, peerId, "end");
-          teardown("Stranger disconnected.");
+          endChat("The stranger left the chat.");
         }
       },
     });
@@ -149,8 +172,10 @@ export default function Home() {
   function handlePeerClick(peerId: string, busy: boolean) {
     const kind = connRef.current.kind;
     if (kind === "requesting") return toast("You're already waiting for an answer.");
-    if (kind !== "idle") return toast("Finish your current chat first.");
+    // An ended chat is only on screen for reading, so it counts as free.
+    if (kind !== "idle" && kind !== "ended") return toast("Finish your current chat first.");
     if (busy) return toast("They're in another chat right now.");
+    if (kind === "ended") dismissEnded();
     requestConnection(peerId);
   }
 
@@ -244,7 +269,11 @@ export default function Home() {
   function processSignal(sig: SignalMsg) {
     switch (sig.type) {
       case "request": {
-        if (connRef.current.kind === "idle") {
+        const kind = connRef.current.kind;
+        // We're free on the server while an ended chat is being read, so a
+        // new request is real: it replaces the old conversation.
+        if (kind === "idle" || kind === "ended") {
+          if (kind === "ended") setMessages([]);
           setConn({ kind: "incoming", peerId: sig.fromId });
         } else {
           void sendSignal(sessionId, sig.fromId, "decline");
@@ -284,10 +313,12 @@ export default function Home() {
       }
       case "end": {
         const c = connRef.current;
-        if (c.kind !== "idle" && c.peerId === sig.fromId) {
+        // Already ended (e.g. their channel close got here first): nothing
+        // left to close, and the conversation stays up.
+        if (c.kind !== "idle" && c.kind !== "ended" && c.peerId === sig.fromId) {
           if (c.kind === "incoming") setConn({ kind: "idle" });
           else if (c.kind === "requesting") teardown("Stranger left.");
-          else teardown("Stranger disconnected.");
+          else endChat("The stranger left the chat.");
         }
         break;
       }
@@ -380,7 +411,10 @@ export default function Home() {
     setTimeout(() => setGateMounted(false), 400);
   }
 
-  const inChat = conn.kind === "connecting" || conn.kind === "connected";
+  const inChat =
+    conn.kind === "connecting" ||
+    conn.kind === "connected" ||
+    conn.kind === "ended";
 
   // The map is mounted from the first render, so the gate sits on top of a
   // live globe and entering is one camera move, not a fresh map load.
@@ -451,6 +485,8 @@ export default function Home() {
           }}
           onStartVideo={startVideoRequest}
           onEnd={endConnection}
+          endedReason={conn.kind === "ended" ? conn.reason : undefined}
+          onClose={dismissEnded}
         />
       )}
 

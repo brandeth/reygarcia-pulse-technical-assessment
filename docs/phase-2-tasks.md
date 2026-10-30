@@ -21,7 +21,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [x] |
 | P2-12 | Incoming request card | 2a | M | 02, 09 | [x] |
 | P2-13 | Chat panel layout | 2a | L | 02 | [x] |
-| P2-14 | Chat "ended" state | 2a | M | 13 | [ ] |
+| P2-14 | Chat "ended" state | 2a | M | 13 | [x] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [ ] |
 | — | *Phase 4 feature, built in the new style* | P4 | — | 2a done | — |
 | P2-16 | Motion pass + reduced motion | 2b | M | 2a done | [ ] |
@@ -149,6 +149,8 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/page.tsx` (new `Conn` kind), `app/components/ChatPanel.tsx`
 - **Do:** when the stranger leaves or the connection fails, keep the messages in memory and show "Chat ended · Back to map" instead of the instant wipe in `teardown()`.
 - **Done when:** a disconnect never yanks the conversation away mid-read, and nothing is persisted.
+- **Done:** `Conn` gains `{ kind: "ended"; peerId; reason }`. `teardown()` split into `closePeer()` (network/media) + state reset; new `endChat(reason)` for partner `end` signal, channel close ("The stranger left the chat.") and ICE failure ("The connection dropped.", replaces the old error toast); own End still tears down. While ended you're free: a new `request` replaces it, tapping a free dot dismisses it and requests, a duplicate `end` is ignored. `ChatPanel` gets `endedReason` + `onClose`: gray "Chat ended", video/End hidden, divider line with the reason, "Nothing was stored…" line, input replaced by an auto-focused "Back to map".
+- **Seen in testing:** closing a tab inside the browser pane doesn't fire `pagehide`, so the partner learned via WebRTC failure (~12 s, "The connection dropped."); a real tab close sends `leave` → "The stranger left the chat."
 
 ### P2-15 · Video panel redesign
 - **Files:** `app/components/VideoPanel.tsx`, `app/page.tsx`, possibly `lib/webrtc.ts` (track toggles)
