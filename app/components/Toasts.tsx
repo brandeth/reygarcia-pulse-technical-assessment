@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 // Short-lived notices ("Request declined.", "Camera unavailable.").
 // Each toast owns its own timer, so a new toast never cuts an older one
@@ -39,18 +39,14 @@ export function useToasts() {
     );
   }, []);
 
-  // `sticky` toasts stay until dismissed (used for "Session expired").
   const toast = useCallback(
-    (
-      text: string,
-      { variant = "info", sticky = false }: { variant?: ToastVariant; sticky?: boolean } = {},
-    ) => {
+    (text: string, { variant = "info" }: { variant?: ToastVariant } = {}) => {
       const id = nextId.current++;
       // Keep the newest few; anything pushed out just disappears.
       setToasts((all) =>
         [...all, { id, text, variant, leaving: false }].slice(-MAX_VISIBLE),
       );
-      if (!sticky) timers.current.set(id, setTimeout(() => dismiss(id), SHOW_MS));
+      timers.current.set(id, setTimeout(() => dismiss(id), SHOW_MS));
     },
     [dismiss],
   );
@@ -64,15 +60,26 @@ export function useToasts() {
   return { toasts, toast };
 }
 
-export function Toaster({ toasts }: { toasts: Toast[] }) {
+// The notification column under the header. Status pills (children) sit on
+// top and toasts below, so the two stack instead of overlapping.
+export function Toaster({
+  toasts,
+  children,
+  className = "",
+}: {
+  toasts: Toast[];
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
     // Always mounted so screen readers pick up each new toast;
     // pointer-events-none so toasts never block the map.
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 top-[calc(4.5rem+var(--safe-top))] z-40 flex flex-col items-center gap-2 px-4"
+      className={`pointer-events-none absolute inset-x-0 top-[calc(4.5rem+var(--safe-top))] z-40 flex flex-col items-center gap-2 px-4 ${className}`}
     >
+      {children}
       {toasts.map((t) => (
         <div
           key={t.id}
