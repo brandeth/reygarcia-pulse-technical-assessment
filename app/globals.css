@@ -1,28 +1,64 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Design tokens: "Night signal". Pulse is dark-only (the map is dark, so the
+   UI is too). Each token becomes a Tailwind utility: --color-accent →
+   bg-accent / text-accent, --radius-panel → rounded-panel, and so on. */
+@theme {
+  --color-ink: #070b14;
+  --color-surface: #0e1422;
+  --color-glass: rgb(14 20 34 / 0.72);
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-fg: #e8ecf4;
+  --color-muted: #8a93a6;
+  --color-accent: #ffb547;
+  --color-accent-hover: #ffc773;
+  --color-on-accent: #1a1204;
+  --color-danger: #f0475b;
+  --color-danger-hover: #f46a7a;
+
+  --radius-panel: 1.25rem;
+  --blur-glass: 16px;
+  --shadow-panel: 0 24px 60px -12px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 20px rgb(255 181 71 / 0.45);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* `inline` because these point at variables next/font sets on <html>. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Safe-area insets for notched phones. They stay 0 until the viewport opts
+   into `viewportFit: "cover"`, which happens once a component pads with them. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* In the base layer so utilities (e.g. `outline-none`) can still override. */
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ink);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background: var(--color-ink);
+    color: var(--color-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(255 181 71 / 0.3);
+  }
 }
 
 /* Live user dots on the map.
