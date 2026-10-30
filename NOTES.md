@@ -333,8 +333,15 @@ shows a globe being used, not just dots sitting still.
     only matches the screen once the globe has flattened out at zoom 6.
     So below zoom 6 the flat arc layers draw (you look straight down at
     a ball there, so height wouldn't show), and the two cross-fade over
-    zoom 6–6.5. The animation, draw-in, sparks and fades are shared: one
+    zoom 6–7. The animation, draw-in, sparks and fades are shared: one
     loop feeds both.
+  - *Found in final testing:* tilted at zoom 6.8, a long arc showed as
+    two lines, the raised one and a dim flat one on the ground. The flat
+    layers' opacity mixes zoom with per-arc data, and Mapbox evaluates
+    such expressions at whole zoom levels and blends in between, so my
+    6 → 6.5 fade really ran 6 → 7. The fade now spans exactly 6 → 7, and
+    the raised arc's height also scales with it (cubed), so during the
+    fade it lies on top of the flat line instead of floating above it.
   - **The arch stands straight up, and rises with the tilt.** Seen from
     directly above, a raised arch appeared to lean away from the screen
     centre (Mapbox's camera has perspective), so the top view showed a
@@ -405,3 +412,38 @@ shows a globe being used, not just dots sitting still.
     strangers joined, connected, ended and left: 3·2 → 5·2 → 4·1 (my
     caller left) → 4·2 → 4·1 → 2·1, always matching the arcs on the
     map; fits on one line at 375 px.
+
+- **How the whole feature was tested.** WebRTC needs two people, but the
+  arcs only need the server to think two people are chatting, so most
+  testing used small Node scripts that join as fake strangers, poll to
+  stay alive, request / accept / end through the real API, and leave.
+  That made each case repeatable: a pair connecting near me, a Tokyo ↔
+  San Francisco pair, a stranger requesting me, a chat already running
+  when I enter, chats ending and tabs closing. In the page, a
+  MutationObserver timed the ripples, and reading the arc source showed
+  draw-in, fades and point counts frame by frame. Reduced motion was
+  checked by stubbing `matchMedia` before the map loaded (arc appears
+  whole and fades in over 0.6 s, no sparks, no ripples); phone width by
+  emulating 375 × 812 (header fits, arc and 3D arch render).
+  - *Not yet checked:* real phones and weaker GPUs (the 3D layer is
+    WebGL 2), and a full run on the Vercel URL with real WebRTC between
+    two devices. Both are part of the final Phase 2 device QA.
+  - *Known gap:* on phones the chat opens as a bottom sheet that covers
+    "You", so your own arc is hidden while you chat. The fix is to pad
+    the camera by the sheet's height while chatting (already noted as a
+    Phase 2 follow-up).
+
+**What I'd do next with more time**
+
+- *Safe:* consent-first video (the other person's video starts blurred
+  until you choose to reveal it, protecting you from what's sent to you)
+  and "Leave & block" (the server stops that session from requesting you
+  again, for as long as either session lives, so nothing persists).
+- *Alive:* intent tags on dots ("can't sleep", "practice a language",
+  from a fixed list so nobody can put personal details on the map),
+  a day/night line on the globe with "it's 3 am for them" in the chat
+  header (time zone sent peer-to-peer), and a shared heartbeat: hold to
+  send your pulse, their avatar beats in your rhythm.
+- *Arcs:* raised 3D arcs on the globe view too (custom layers get the
+  globe matrices from Mapbox; it means drawing in two projections), and
+  frame both people above the phone's chat sheet.
