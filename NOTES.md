@@ -105,6 +105,20 @@ it at runtime instead of swapping the provided map library.
   to screen readers. Measured: a toast fired 3 s after another now keeps
   its full 3.5 s.
 
+- **Status vs. toasts.** "Requesting connection…" and the video-request
+  message were separately positioned pills that could overlap toasts.
+  They're now status pills in the same column as toasts (status on top,
+  toasts below), split by meaning: status lasts as long as the state,
+  toasts report a moment. Video requests also had no way out: if the
+  other person never answered, you waited forever. Added Cancel, which
+  reuses the existing `video-end` control to close their prompt.
+  
+- **Expired session.** A rejected token stops polling, so the map goes
+  dead. Instead of a toast saying "reload", a blocking card explains it
+  and focuses a Reload button. Trade-off: if it fires mid-chat it covers
+  a peer-to-peer chat that still works, but that only happens when the
+  server secret rotates.
+
 ## Phase 3 — Security
 
 - **Anyone could act as anyone (critical).** The session id was the only

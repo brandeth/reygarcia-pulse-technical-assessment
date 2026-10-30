@@ -13,7 +13,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-03 | Restyle the Mapbox map | 2a | M | 02 | [x] |
 | P2-04 | Header: wordmark + online count | 2a | S | 02 | [x] |
 | P2-05 | Toast queue (fixes Task 8) | 2a | M | 02 | [x] |
-| P2-06 | Status pill + session-expired banner | 2a | S | 05 | [ ] |
+| P2-06 | Status pill + session-expired banner | 2a | S | 05 | [x] |
 | P2-07 | Keep map mounted behind the gate | 2a | M | 03 | [ ] |
 | P2-08 | Entry screen redesign | 2a | M | 07 | [ ] |
 | P2-09 | Dot redesign | 2a | M | 03 | [ ] |
@@ -92,6 +92,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/page.tsx`
 - **Do:** one persistent status slot for "Requesting…" and "Waiting for video…", kept clear of the toast stack (toasts now sit at `top-[4.5rem]`; the requesting pill still sits at `top-20` and can overlap them); "Session expired" becomes a banner with a Reload button, replacing the sticky toast.
 - **Done when:** status and toasts never overlap, and the expired state has a way out.
+- **Done:** `StatusPill.tsx` (spinner + text + optional `Button` Cancel) renders as children of `Toaster`, so status and toasts share one column under the header and stack. The column re-centers over the visible map when the chat drawer is open (`md:right-[28rem]`). Video requests can now be cancelled (sends `video-end`, which closes the other side's prompt). "Session expired" is a blocking `SessionExpired.tsx` card (alertdialog, Reload button auto-focused) instead of a banner, because nothing works past that point; the sticky-toast option was removed. Trade-off: if it fires mid-chat, the card covers a peer-to-peer chat that still works. Rare (secret rotation only).
 
 ## Phase 2a — Screens
 

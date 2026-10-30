@@ -5,6 +5,8 @@ import EntryGate from "./components/EntryGate";
 import WorldMap from "./components/WorldMap";
 import Header from "./components/Header";
 import { Toaster, useToasts } from "./components/Toasts";
+import StatusPill from "./components/StatusPill";
+import SessionExpired from "./components/SessionExpired";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import VideoPanel from "./components/VideoPanel";
@@ -29,6 +31,7 @@ export default function Home() {
   const [sessionId, setSessionId] = useState("");
   const [peers, setPeers] = useState<PeerDot[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [expired, setExpired] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [myLocation, setMyLocation] = useState<{
@@ -189,6 +192,13 @@ export default function Home() {
     peerRef.current.sendControl("video-request");
   }
 
+  function cancelVideoRequest() {
+    if (videoRef.current !== "requesting") return;
+    // video-end also closes the other side's "Start video call?" prompt.
+    peerRef.current?.sendControl("video-end");
+    setVideo("none");
+  }
+
   function acceptVideo() {
     const ps = peerRef.current;
     if (!ps) return;
@@ -299,8 +309,7 @@ export default function Home() {
         // Token rejected (e.g. SESSION_SECRET rotated) — retrying can't
         // succeed, so stop polling and ask for a reload.
         if (err instanceof SessionExpiredError) {
-          // Sticky until P2-06 turns this into a banner with a Reload button.
-          toast("Session expired, reload.", { variant: "error", sticky: true });
+          setExpired(true);
           return;
         }
       }
@@ -312,7 +321,7 @@ export default function Home() {
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [phase, sessionId, toast]);
+  }, [phase, sessionId]);
 
   useEffect(() => {
     if (!sessionId || phase !== "live") return;
@@ -350,19 +359,16 @@ export default function Home() {
 
       <Header online={peers.length} />
 
-      <Toaster toasts={toasts} />
-
-      {conn.kind === "requesting" && (
-        <div className="absolute left-1/2 top-20 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
-          <span>Requesting connection…</span>
-          <button
-            onClick={cancelRequest}
-            className="rounded-full bg-zinc-700 px-3 py-1 text-xs hover:bg-zinc-600"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
+      {/* With the chat drawer open on wide screens, center over the map
+          area that's still visible (the drawer is max-w-md = 28rem). */}
+      <Toaster toasts={toasts} className={inChat ? "md:right-[28rem]" : ""}>
+        {conn.kind === "requesting" && (
+          <StatusPill onCancel={cancelRequest}>Requesting connection…</StatusPill>
+        )}
+        {video === "requesting" && (
+          <StatusPill onCancel={cancelVideoRequest}>Requesting video…</StatusPill>
+        )}
+      </Toaster>
 
       {conn.kind === "incoming" && (
         <ConnectionPrompt
@@ -388,12 +394,6 @@ export default function Home() {
         />
       )}
 
-      {video === "requesting" && (
-        <div className="absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
-          Waiting for stranger to accept video…
-        </div>
-      )}
-
       {video === "incoming" && (
         <ConnectionPrompt
           title="Start video call?"
@@ -412,6 +412,8 @@ export default function Home() {
           onEnd={endVideo}
         />
       )}
+
+      {expired && <SessionExpired />}
     </main>
   );
 }
