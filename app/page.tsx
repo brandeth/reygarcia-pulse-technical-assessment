@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import EntryGate from "./components/EntryGate";
 import WorldMap from "./components/WorldMap";
 import Header from "./components/Header";
+import { Toaster, useToasts } from "./components/Toasts";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import VideoPanel from "./components/VideoPanel";
@@ -28,7 +29,6 @@ export default function Home() {
   const [sessionId, setSessionId] = useState("");
   const [peers, setPeers] = useState<PeerDot[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [notice, setNotice] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [myLocation, setMyLocation] = useState<{
@@ -56,10 +56,7 @@ export default function Home() {
   const msgId = useRef(0);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function showNotice(text: string) {
-    setNotice(text);
-    window.setTimeout(() => setNotice(null), 3500);
-  }
+  const { toasts, toast } = useToasts();
 
   function addMessage(mine: boolean, text: string) {
     setMessages((prev) => [...prev, { id: msgId.current++, mine, text }]);
@@ -74,7 +71,7 @@ export default function Home() {
     setVideo("none");
     setMessages([]);
     setConn({ kind: "idle" });
-    if (message) showNotice(message);
+    if (message) toast(message);
   }
 
   function startPeer(peerId: string, initiator: boolean) {
@@ -89,7 +86,8 @@ export default function Home() {
         if (state === "failed") {
           // Tell the server too, or both of us stay busy + paired.
           void sendSignal(sessionId, peerId, "end");
-          teardown("Connection failed (network).");
+          teardown();
+          toast("Connection failed (network).", { variant: "error" });
         }
       },
       onChannelOpen: () => {
@@ -122,14 +120,14 @@ export default function Home() {
             .catch(() => {
               setVideo("none");
               ps.sendControl("video-end");
-              showNotice("Camera unavailable.");
+              toast("Camera unavailable.", { variant: "error" });
             });
         }
         break;
       case "video-decline":
         if (videoRef.current === "requesting") {
           setVideo("none");
-          showNotice("Video declined.");
+          toast("Video declined.");
         }
         break;
       case "video-end":
@@ -203,7 +201,7 @@ export default function Home() {
       .catch(() => {
         ps.sendControl("video-decline");
         setVideo("none");
-        showNotice("Camera unavailable.");
+        toast("Camera unavailable.", { variant: "error" });
       });
   }
 
@@ -301,7 +299,8 @@ export default function Home() {
         // Token rejected (e.g. SESSION_SECRET rotated) — retrying can't
         // succeed, so stop polling and ask for a reload.
         if (err instanceof SessionExpiredError) {
-          setNotice("Session expired, reload.");
+          // Sticky until P2-06 turns this into a banner with a Reload button.
+          toast("Session expired, reload.", { variant: "error", sticky: true });
           return;
         }
       }
@@ -313,7 +312,7 @@ export default function Home() {
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [phase, sessionId]);
+  }, [phase, sessionId, toast]);
 
   useEffect(() => {
     if (!sessionId || phase !== "live") return;
@@ -351,11 +350,7 @@ export default function Home() {
 
       <Header online={peers.length} />
 
-      {notice && (
-        <div className="absolute left-1/2 top-20 z-30 -translate-x-1/2 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
-          {notice}
-        </div>
-      )}
+      <Toaster toasts={toasts} />
 
       {conn.kind === "requesting" && (
         <div className="absolute left-1/2 top-20 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
