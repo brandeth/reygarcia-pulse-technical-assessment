@@ -45,4 +45,23 @@ different mock geolocations).
   token shows the hint instead. (An *invalid* but present token, e.g. the
   `.env.example` placeholder, still fails at Mapbox — validating it would
   need a network call, out of scope.)
+
+## Phase 3 — Security
+
+- **Anyone could act as anyone (critical).** The session id was the only
+  credential, and `/api/poll` returns every online id, so any client could
+  poll (draining someone's mailbox), signal, leave or rejoin as another user.
+  Confirmed by calling `/api/leave` with another window's id from DevTools:
+  their dot vanished.
+  Fix: the server now issues `{ id, token }` on join, where
+  `token = HMAC-SHA256(SESSION_SECRET, id)` (`lib/auth.ts`). Every route
+  verifies it with `timingSafeEqual`. Poll and signal send it in an
+  `x-pulse-token` header (kept out of URLs/logs), and leave sends it in the
+  body because `sendBeacon` can't set headers. Signal also checks the token
+  against `fromId` and rejects bad or self-addressed `toId`s. The client keeps
+  the token in memory only, so closing the tab still ends the session.
+  - *Trade-offs:* tokens are stateless and don't expire on their own;
+    rotating `SESSION_SECRET` invalidates all of them (the client shows
+    "Session expired, reload."). A valid user can still send signals to
+    any id. That's tracked as a separate issue.
   
