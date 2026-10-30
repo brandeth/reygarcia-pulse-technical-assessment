@@ -27,6 +27,8 @@ export default function WorldMap({
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
   const meMarkerRef = useRef<Marker | null>(null);
+  // The request whose person we've already brought into view (see below).
+  const framedTargetRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
   // Marker click handlers are bound once, so read the live click handler
@@ -199,6 +201,24 @@ export default function WorldMap({
           markers.delete(id);
           marker.getElement().setAttribute("data-leaving", "");
           setTimeout(() => marker.remove(), DOT_EXIT_MS);
+        }
+      }
+
+      // An incoming request can come from anyone, anywhere: if their dot is
+      // off-screen, fly to it so you can see who's calling. Once per request,
+      // so the user can still pan away. (Outgoing targets are already on
+      // screen; you just tapped them.) Not while the camera is moving, e.g.
+      // mid entry flight, when "in view" means nothing yet; the next poll
+      // re-runs this.
+      if (!targetId) {
+        framedTargetRef.current = null;
+      } else if (framedTargetRef.current !== targetId && !map.isMoving()) {
+        const target = markers.get(targetId);
+        if (target) {
+          framedTargetRef.current = targetId;
+          if (!map.getBounds()?.contains(target.getLngLat())) {
+            map.flyTo({ center: target.getLngLat(), duration: 1500 });
+          }
         }
       }
     })();

@@ -347,6 +347,28 @@ export default function Home() {
     };
   }, [sessionId, phase]);
 
+  // A request in a background tab would time out unseen, so flash the tab
+  // title until the tab is looked at or the request is answered.
+  const titleAlert =
+    conn.kind === "incoming"
+      ? "Someone wants to connect"
+      : video === "incoming"
+        ? "Video call request"
+        : null;
+  useEffect(() => {
+    if (!titleAlert) return;
+    const original = document.title;
+    let flashOn = false;
+    const id = setInterval(() => {
+      flashOn = document.hidden && !flashOn;
+      document.title = flashOn ? `● ${titleAlert}` : original;
+    }, 1000);
+    return () => {
+      clearInterval(id);
+      document.title = original;
+    };
+  }, [titleAlert]);
+
   async function handleReady(lat: number, lng: number) {
     myLocationRef.current = { lat, lng };
     const id = await join(lat, lng); // throws on failure → EntryGate shows error
@@ -369,7 +391,12 @@ export default function Home() {
         peers={peers}
         me={myLocation}
         onPeerClick={handlePeerClick}
-        targetId={conn.kind === "requesting" ? conn.peerId : null}
+        // The other person in a pending request, either direction.
+        targetId={
+          conn.kind === "requesting" || conn.kind === "incoming"
+            ? conn.peerId
+            : null
+        }
       />
 
       {gateMounted && (
@@ -398,12 +425,18 @@ export default function Home() {
       </Toaster>
 
       {conn.kind === "incoming" && (
+        // The requester gives up after REQUEST_TIMEOUT_MS; their "end" closes
+        // this card, so the ring is a close (poll-delayed) view of that.
         <ConnectionPrompt
+          key={conn.peerId}
+          kind="connect"
           title="A stranger wants to connect"
+          subtitle="Accept to start a private chat."
           acceptLabel="Accept"
           declineLabel="Decline"
           onAccept={acceptIncoming}
           onDecline={declineIncoming}
+          countdownMs={REQUEST_TIMEOUT_MS}
         />
       )}
 
@@ -423,12 +456,15 @@ export default function Home() {
 
       {video === "incoming" && (
         <ConnectionPrompt
+          kind="video"
           title="Start video call?"
           subtitle="The stranger wants to turn on video."
           acceptLabel="Accept"
           declineLabel="Decline"
           onAccept={acceptVideo}
           onDecline={declineVideo}
+          // Center over the map beside the chat drawer, like the toasts.
+          className="md:right-[28rem]"
         />
       )}
 

@@ -19,7 +19,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 | P2-09 | Dot redesign | 2a | M | 03 | [x] |
 | P2-10 | "Me" marker redesign | 2a | S | 09 | [x] |
 | P2-11 | Outgoing request: countdown + target ring | 2a | M | 06, 09 | [x] |
-| P2-12 | Incoming request card | 2a | M | 02, 09 | [ ] |
+| P2-12 | Incoming request card | 2a | M | 02, 09 | [x] |
 | P2-13 | Chat panel layout | 2a | L | 02 | [ ] |
 | P2-14 | Chat "ended" state | 2a | M | 13 | [ ] |
 | P2-15 | Video panel redesign | 2a | L | 13 | [ ] |
@@ -135,6 +135,7 @@ Size: S < 1h · M 1–3h · L 3h+. Mapbox stays; all map styling happens at runt
 - **Files:** `app/components/ConnectionPrompt.tsx`, `app/page.tsx`
 - **Do:** a card that doesn't block the map (no black overlay); fly to / highlight the requester's dot; flash the tab title when the tab is hidden; reuse it for the incoming-video prompt.
 - **Done when:** a request is noticeable even in a background tab, and the map stays visible.
+- **Done:** `ConnectionPrompt` is a bottom glass card (`kind` connect / video, `animate-card-in`, Button primary + secondary, `role="alertdialog"`, no dark overlay); connect shows the caller's amber dot inside a `CountdownRing` (extracted from StatusPill) for `REQUEST_TIMEOUT_MS`; video card has a camera icon, no countdown, `md:right-[28rem]`. `targetId` now covers incoming too, and `WorldMap` flies to an off-screen target once per request (skipped while the camera is moving, e.g. mid entry flight). `page.tsx` flashes `document.title` every 1 s while a request is pending and the tab is hidden, restoring it on answer/unmount.
 
 ### P2-13 · Chat panel layout
 - **Files:** `app/components/ChatPanel.tsx`
